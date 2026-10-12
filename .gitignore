@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Large installers
+python installer/
+
+# SQLite databases & runtime storage
+*.db
+*.sqlite
+*.sqlite3
+relay_service/data/audit.db
+
+# Runtime logs
+logs/*.log
+logs/*.jsonl
+relay_service/logs/*.log
+relay_service/logs/*.jsonl
+relay_service/logs/mock_sent_sms.jsonl
+
+# Raw webhook payload captures
+relay_service/data/raw_payloads/*.json
+!relay_service/data/raw_payloads/.gitkeep
+
+# SMS Tester runtime history
+sms_tester/data/history.json
+
+# IDEs and OS files
+.idea/
+.vscode/
+*.swp
+*~
+Thumbs.db
+.DS_Store

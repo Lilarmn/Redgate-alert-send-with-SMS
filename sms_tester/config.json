@@ -1,0 +1,21 @@
+{
+  "sms_server": {
+    "base_url": "https://api.sms-gateway.example.com",
+    "send_endpoint": "/api/v1/sms/send",
+    "api_key": "YOUR_SMS_API_KEY_HERE",
+    "accept_language": "fa",
+    "timeout_seconds": 10,
+    "verify_ssl": true,
+    "mock_mode": false,
+    "mock_scenario": "SENT_OK"
+  },
+  "defaults": {
+    "phone": "09121234567",
+    "message": "این یک پیامک آزمایشی جهت بررسی اتصال به سرویس پیامک می‌باشد."
+  },
+  "app": {
+    "host": "127.0.0.1",
+    "port": 8080,
+    "debug": false
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "database": {
+    "enabled": true,
+    "type": "mssql",
+    "server": ".\\SQL2025",
+    "port": 1433,
+    "database": "AlertWebhook",
+    "auth_type": "windows",
+    "username": "sa",
+    "password": "",
+    "alerts_table": "alerts",
+    "sms_table": "sms_queue"
+  },
+  "dry_run": false,
+  "field_mappings": {
+    "alert_id": [
+      "alertid",
+      "id",
+      "alert_id",
+      "incidentid",
+      "alert.id"
+    ],
+    "alert_name": [
+      "alerttype",
+      "alertname",
+      "name",
+      "type",
+      "title",
+      "rule",
+      "alert.type"
+    ],
+    "message": [
+      "description",
+      "message",
+      "summary",
+      "details",
+      "text",
+      "body",
+      "comment",
+      "alert.description"
+    ],
+    "severity": [
+      "severity",
+      "level",
+      "priority",
+      "statuslevel",
+      "alert.severity"
+    ],
+    "status": [
+      "status",
+      "state",
+      "event",
+      "eventtype",
+      "action",
+      "alert.status"
+    ],
+    "target": [
+      "target",
+      "targetobject",
+      "object",
+      "server",
+      "machine",
+      "machinename",
+      "instance",
+      "instancename",
+      "cluster",
+      "host",
+      "target.name",
+      "alert.target"
+    ],
+    "timestamp": [
+      "timestamp",
+      "time",
+      "date",
+      "raisedat",
+      "occurredat",
+      "alert.time"
+    ],
+    "url": [
+      "url",
+      "link",
+      "alerturl",
+      "href",
+      "alert.url"
+    ]
+  },
+  "logging": {
+    "audit_jsonl_file": "logs/audit.jsonl",
+    "backup_count": 5,
+    "file": "logs/relay.log",
+    "max_bytes": 10485760
+  },
+  "phone_numbers": [
+    "09121234567",
+    "09129876543"
+  ],
+  "routing": {
+    "deduplication_window_minutes": 5,
+    "default_recipients": [
+      {
+        "bypass_quiet_hours": false,
+        "name": "Default Administrator",
+        "phone": "09121234567"
+      }
+    ],
+    "quiet_hours": {
+      "enabled": false,
+      "end": "07:00",
+      "start": "23:00"
+    },
+    "rate_limit_per_phone_per_hour": 30,
+    "rules": [
+      {
+        "alert_name": "*",
+        "name": "High Severity DBA On-Call",
+        "recipients": [
+          {
+            "bypass_quiet_hours": true,
+            "name": "DBA Lead",
+            "phone": "09121234567"
+          },
+          {
+            "bypass_quiet_hours": false,
+            "name": "SysAdmin Secondary",
+            "phone": "09129876543"
+          }
+        ],
+        "severity": [
+          "High",
+          "Critical"
+        ],
+        "target": "*"
+      },
+      {
+        "alert_name": [
+          "*Deadlock*",
+          "*Job failure*",
+          "*Long running*"
+        ],
+        "name": "Deadlocks & Long Running Queries",
+        "recipients": [
+          {
+            "bypass_quiet_hours": true,
+            "name": "DBA Performance",
+            "phone": "09121234567"
+          }
+        ],
+        "severity": [
+          "Medium",
+          "High"
+        ],
+        "target": "*"
+      },
+      {
+        "alert_name": "*",
+        "name": "Production Database Cluster",
+        "recipients": [
+          {
+            "bypass_quiet_hours": true,
+            "name": "Operations Center",
+            "phone": "09120000000"
+          }
+        ],
+        "severity": "*",
+        "target": [
+          "*PROD*",
+          "*Cluster*"
+        ]
+      }
+    ]
+  },
+  "server": {
+    "auth_token": "",
+    "host": "0.0.0.0",
+    "port": 8000
+  },
+  "sms": {
+    "dispatch_mode": "auto",
+    "http": {
+      "accept_language": "fa",
+      "api_key": "YOUR_SMS_API_KEY_HERE",
+      "auth_header_name": "Authorization",
+      "auth_type": "bearer",
+      "body_template": {
+        "destination": "{destination}",
+        "message": "{message}"
+      },
+      "ca_bundle": null,
+      "headers": {},
+      "max_retries": 3,
+      "method": "POST",
+      "retry_delay_seconds": 1,
+      "success_condition": {
+        "expected": true,
+        "key": "success"
+      },
+      "timeout_seconds": 10,
+      "url": "https://api.sms-gateway.example.com/v1/sms/send",
+      "verify_ssl": true,
+      "destination_field": "destination",
+      "message_field": "message"
+    },
+    "mock": {
+      "output_file": "logs/mock_sent_sms.jsonl",
+      "simulate_failure": false,
+      "simulate_latency_seconds": 0.05,
+      "simulate_timeout": false
+    },
+    "provider": "mock"
+  },
+  "storage": {
+    "database_path": "data/audit.db",
+    "raw_payloads_dir": "data/raw_payloads"
+  },
+  "templates": {
+    "default": "هشدار فوری: {alert_name}\nسرور: {target}\nسطح: {severity}\nوضعیت: {status}\n{message}",
+    "high": "هشدار فوری: {alert_name}\nسرور: {target}\nسطح: {severity}\nوضعیت: {status}\n{message}",
+    "low": "اطلاعیه: {alert_name} در {target} [{severity}]",
+    "max_length": 480,
+    "medium": "هشدار: {alert_name}\nسرور: {target}\nسطح: {severity}\nوضعیت: {status}",
+    "split_messages": false
+  }
+}

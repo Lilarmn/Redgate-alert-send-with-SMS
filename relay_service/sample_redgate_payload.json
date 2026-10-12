@@ -1,0 +1,12 @@
+{
+  "Alert": {
+    "Id": 2049,
+    "Type": "Job failure",
+    "Severity": "High",
+    "Status": "Raised",
+    "Target": "SQL-PROD-CLUSTER01\\INST01",
+    "Description": "SQL Server Agent Job 'Nightly_Backup_Differential' reported failure on step 2 (Database backup failed).",
+    "Url": "http://redgate-monitor.internal:8080/Alerts/2049",
+    "Time": "2026-10-07T16:15:00Z"
+  }
+}

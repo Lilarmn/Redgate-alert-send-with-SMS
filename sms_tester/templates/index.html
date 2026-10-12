@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تستر و عیب‌یاب سرویس پیامک | SMS Gateway API Tester</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-card-hover: #24344d;
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #6366f1;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Vazirmatn", "Tahoma", sans-serif;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f1f5f9;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f8fafc;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent: #0284c7;
+            --accent-hover: #0369a1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 50px;
+            direction: rtl;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 22px;
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .pill-badge.live {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .pill-badge.mock {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-icon {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-icon:hover {
+            border-color: var(--accent);
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: var(--bg-secondary);
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: var(--accent);
+        }
+        [data-theme="light"] .tab-btn.active {
+            color: #ffffff;
+            background: var(--accent);
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 868px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .form-help {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            direction: ltr;
+            text-align: left;
+        }
+        .form-control.rtl {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0284c7, #0ea5e9);
+            color: white;
+            box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0369a1, #0284c7);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Template pills */
+        .template-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .pill-btn {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .pill-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-main);
+        }
+
+        /* Char counter */
+        .counter-badge {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Results Display */
+        .result-box {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-badge.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .code-block {
+            background: #090d16;
+            color: #38bdf8;
+            font-family: Consolas, Monaco, monospace;
+            direction: ltr;
+            text-align: left;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            overflow-x: auto;
+            max-height: 250px;
+            margin-top: 8px;
+            border: 1px solid #1e293b;
+        }
+
+        /* Diagnostics Checklist */
+        .diag-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px;
+            border-radius: 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .diag-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .diag-icon.pass {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .diag-icon.fail {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .diag-icon.wait {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .diag-content {
+            flex-grow: 1;
+        }
+
+        .diag-title {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .diag-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .diag-hint {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(245, 158, 11, 0.1);
+            border-right: 3px solid var(--warning);
+            font-size: 12px;
+            color: #fbbf24;
+            border-radius: 4px;
+        }
+
+        /* History Table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: right;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-primary);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Loader */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .info-pill {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            direction: ltr;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header>
+        <div class="header-title">
+            <div class="logo-icon">📡</div>
+            <div>
+                <h1>تستر و ارزیاب اتصال به SMS سرور</h1>
+                <div class="subtitle">تست مستقل اتصال، احراز هویت و ارسال پیامک بر اساس استاندارد رسمی API ارسال پیامک (نسخه ۱.۰)</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span id="mode-badge" class="pill-badge live" onclick="toggleMockMode()" title="برای تغییر حالت کلیک کنید">
+                🟢 سرور واقعی (Live)
+            </span>
+            <button class="btn-icon" onclick="toggleTheme()" title="تغییر تم">🌓</button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('test')">🚀 تست ارسال پیامک</button>
+        <button class="tab-btn" onclick="switchTab('diag')">🔍 عیب‌یابی چندمرحله‌ای زیرساخت</button>
+        <button class="tab-btn" onclick="switchTab('config')">⚙️ تنظیمات و تغییر کانفیگ</button>
+        <button class="tab-btn" onclick="switchTab('history')">📜 تاریخچه تست‌ها</button>
+        <button class="tab-btn" onclick="switchTab('spec')">📘 راهنمای مستندات API</button>
+    </div>
+
+    <!-- TAB 1: SEND TEST SMS -->
+    <div id="tab-test" class="tab-content">
+        <div class="grid-2">
+            <!-- Form Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📱 ارسال پیامک آزمایشی</span>
+                    <span class="info-pill" id="current-endpoint-pill">POST /api/v1/sms/send</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">شماره تلفن همراه مقصد (destination):</label>
+                    <input type="text" id="phone-input" class="form-control" placeholder="09121234567" value="09121234567">
+                    <div class="form-help">فرمت استاندارد: ۱۱ رقم، شروع با 09 (مثال: 09121234567)</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">متن پیامک (message):</label>
+                    <textarea id="message-input" class="form-control rtl" placeholder="متن پیامک آزمایشی را اینجا بنویسید..." oninput="updateCharCount()">این یک پیامک آزمایشی جهت بررسی اتصال و عملکرد سیستم با سرور پیامک می‌باشد.</textarea>
+                    <div class="counter-badge">
+                        <span id="char-count">تعداد کاراکتر: ۶۵ / ۴۸۰</span>
+                        <span id="part-count">تعداد پیامک: ۱ پیام</span>
+                    </div>
+
+                    <div class="template-pills">
+                        <span style="font-size: 11px; color: var(--text-muted); align-self: center;">قالب‌های آماده:</span>
+                        <button class="pill-btn" onclick="setTemplate(1)">تست اتصال ساده</button>
+                        <button class="pill-btn" onclick="setTemplate(2)">هشدار دیتابیس</button>
+                        <button class="pill-btn" onclick="setTemplate(3)">کد تایید OTP</button>
+                    </div>
+                </div>
+
+                <button id="btn-send-sms" class="btn btn-primary" style="width: 100%;" onclick="sendTestSms()">
+                    <span>🚀 ارسال پیامک آزمایشی و ارزیابی پاسخ</span>
+                </button>
+            </div>
+
+            <!-- Result Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📊 نتیجه بررسی و پاسخ سرور</span>
+                    <span id="test-elapsed" class="info-pill" style="display: none;">0 ms</span>
+                </div>
+
+                <div id="test-idle" style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
+                    <div style="font-size: 40px; margin-bottom: 12px;">⏳</div>
+                    <div>هنوز تستی ارسال نشده است.</div>
+                    <div style="font-size: 12px; margin-top: 6px;">روی دکمه «ارسال پیامک آزمایشی» کلیک کنید تا تمام مراحل تحلیل شود.</div>
+                </div>
+
+                <div id="test-loading" style="text-align: center; padding: 40px 10px; display: none;">
+                    <div class="spinner" style="margin: 0 auto 12px; width: 30px; height: 30px; border-width: 3px;"></div>
+                    <div>در حال ارسال درخواست به سرور پیامک و ارزیابی پاسخ...</div>
+                </div>
+
+                <div id="test-result-box" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                        <span id="result-status-badge" class="status-badge success">کد: SENT_OK</span>
+                        <span id="result-http-code" class="info-pill">HTTP 200</span>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <strong id="result-explanation" style="font-size: 15px;">پیام با موفقیت ارسال شد.</strong>
+                        <div id="result-hint" class="diag-hint" style="margin-top: 6px; display: none;"></div>
+                    </div>
+
+                    <div style="margin-top: 16px;">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">جزئیات پاسخ خام سرور (Raw JSON Response):</div>
+                        <pre id="result-json-block" class="code-block"></pre>
+                    </div>
+
+                    <div style="margin-top: 14px;">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">درخواست ارسالی ما (Sent Payload & Headers):</div>
+                        <pre id="request-json-block" class="code-block" style="max-height: 140px;"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: NETWORK DIAGNOSTICS -->
+    <div id="tab-diag" class="tab-content" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <span class="card-title">🔍 بررسی و عیب‌یابی ۴ مرحله‌ای شبکه و زیرساخت</span>
+                    <div class="subtitle">بررسی مرحله‌به‌مرحله: DNS ◄ پورت TCP ◄ گواهینامه SSL/TLS ◄ پاسخ وب‌سرور HTTP</div>
+                </div>
+                <button id="btn-run-diag" class="btn btn-primary" onclick="runDiagnostics()">
+                    <span>⚡ اجرای تست سلامت زیرساخت</span>
+                </button>
+            </div>
+
+            <div id="diag-summary-box" style="display: none; margin-bottom: 20px; padding: 14px 18px; border-radius: 10px; background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 700; font-size: 15px;" id="diag-summary-text">نتیجه ارزیابی سلامت کلی: در انتظار</span>
+                    <span id="diag-score-badge" class="status-badge success">امتیاز: ۴ از ۴</span>
+                </div>
+            </div>
+
+            <div id="diag-steps-container">
+                <!-- Step 1: DNS -->
+                <div class="diag-item" id="diag-step-0">
+                    <div class="diag-icon wait">۱</div>
+                    <div class="diag-content">
+                        <div class="diag-title">
+                            <span>تحلیل و تفکیک نام دامنه (DNS Resolution)</span>
+                            <span class="info-pill" id="diag-target-0">api.sms-gateway.example.com</span>
+                        </div>
+                        <div class="diag-desc" id="diag-desc-0">بررسی تبدیل نام هاست به IP از طریق DNS سرور شبکه</div>
+                    </div>
+                </div>
+
+                <!-- Step 2: TCP -->
+                <div class="diag-item" id="diag-step-1">
+                    <div class="diag-icon wait">۲</div>
+                    <div class="diag-content">
+                        <div class="diag-title">
+                            <span>ارتباط پورت شبکه (TCP Socket Connection)</span>
+                            <span class="info-pill" id="diag-target-1">api.sms-gateway.example.com:443</span>
+                        </div>
+                        <div class="diag-desc" id="diag-desc-1">بررسی دسترسی و باز بودن پورت ۴۴۳ و عدم انسداد توسط فایروال</div>
+                    </div>
+                </div>
+
+                <!-- Step 3: SSL -->
+                <div class="diag-item" id="diag-step-2">
+                    <div class="diag-icon wait">۳</div>
+                    <div class="diag-content">
+                        <div class="diag-title">
+                            <span>نشست امنیتی و گواهینامه SSL/TLS</span>
+                            <span class="info-pill" id="diag-target-2">TLS Handshake</span>
+                        </div>
+                        <div class="diag-desc" id="diag-desc-2">بررسی اعتبار، تاریخ انقضا و زنجیره اعتماد گواهینامه امنیتی سرور</div>
+                    </div>
+                </div>
+
+                <!-- Step 4: HTTP -->
+                <div class="diag-item" id="diag-step-3">
+                    <div class="diag-icon wait">۴</div>
+                    <div class="diag-content">
+                        <div class="diag-title">
+                            <span>پاسخگویی سرویس وب (HTTP Layer Probe)</span>
+                            <span class="info-pill" id="diag-target-3">HTTP GET/HEAD</span>
+                        </div>
+                        <div class="diag-desc" id="diag-desc-3">بررسی پاسخدهی وب‌سرور و دریافت هدرهای سرویس پیامک</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: CONFIGURATION -->
+    <div id="tab-config" class="tab-content" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <span class="card-title">⚙️ تنظیمات و تغییر کانفیگ سرور پیامک</span>
+                    <div class="subtitle">تنظیمات در فایل config.json ذخیره می‌شوند و تغییرات فوراً اعمال می‌گردد.</div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" onclick="resetConfig()">🔄 بازنشانی به پیش‌فرض داکیومنت</button>
+                    <button class="btn btn-primary" onclick="saveConfig()">💾 ذخیره تغییرات</button>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">آدرس پایه سرور پیامک (Base URL):</label>
+                        <input type="text" id="cfg-base-url" class="form-control" value="https://api.sms-gateway.example.com">
+                        <div class="form-help">طبق مستندات: https://api.sms-gateway.example.com</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">اندپوینت ارسال پیامک (Send Endpoint):</label>
+                        <input type="text" id="cfg-endpoint" class="form-control" value="/api/v1/sms/send">
+                        <div class="form-help">طبق مستندات: /api/v1/sms/send (متد POST)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">کلید دسترسی سرور (API Key):</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="password" id="cfg-api-key" class="form-control" placeholder="YOUR_SMS_API_KEY">
+                            <button class="btn-icon" type="button" onclick="toggleApiKeyVisibility()">👁️</button>
+                        </div>
+                        <div class="form-help">در هدر <code>Authorization: Bearer {API_KEY}</code> ارسال می‌شود.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">زبان پیام‌های خطا و وضعیت (Accept-Language):</label>
+                        <select id="cfg-language" class="form-control">
+                            <option value="fa">فارسی (fa)</option>
+                            <option value="en">English (en)</option>
+                        </select>
+                        <div class="form-help">اختیاری - تعیین‌کننده زبان متن فیلد message در خروجی سرور</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">حداکثر مهلت انتظار پاسخ به ثانیه (Timeout):</label>
+                        <input type="number" id="cfg-timeout" class="form-control" value="10" min="1" max="60">
+                        <div class="form-help">پیش‌فرض: ۱۰ ثانیه</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">تایید گواهینامه امنیتی (Verify SSL):</label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 6px;">
+                            <input type="checkbox" id="cfg-verify-ssl" checked style="width: 18px; height: 18px;">
+                            <span style="font-size: 13px;">بررسی صحت گواهینامه SSL فعال باشد (توصیه شده)</span>
+                        </label>
+                        <div class="form-help">اگر از شبکه داخلی استفاده می‌کنید و خطای SSL دریافت می‌کنید، این تیک را بردارید.</div>
+                    </div>
+
+                    <div class="form-group" style="padding: 14px; background: rgba(245, 158, 11, 0.08); border: 1px dashed var(--warning); border-radius: 8px;">
+                        <label class="form-label" style="color: #fbbf24;">🧪 حالت شبیه‌ساز آفلاین (Mock Simulator Mode):</label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
+                            <input type="checkbox" id="cfg-mock-mode" style="width: 18px; height: 18px;">
+                            <span style="font-size: 13px;">فعال‌سازی شبیه‌ساز (بدون ارسال واقعی به شبکه اینترنت)</span>
+                        </label>
+                        <label class="form-label">سناریوی تستی مورد شبیه‌سازی:</label>
+                        <select id="cfg-mock-scenario" class="form-control">
+                            <option value="SENT_OK">SENT_OK (پاسخ ۲۰۰ موفق)</option>
+                            <option value="INVALID_NUMBER">INVALID_NUMBER (شماره مقصد نامعتبر - ۴۰۰)</option>
+                            <option value="EMPTY_MESSAGE">EMPTY_MESSAGE (پیامک خالی - ۴۰۰)</option>
+                            <option value="UNAUTHORIZED">UNAUTHORIZED (کلید API نامعتبر - ۴۰۱)</option>
+                            <option value="RATE_LIMIT_EXCEEDED">RATE_LIMIT_EXCEEDED (سقف مجاز پر شد - ۴۲۹)</option>
+                            <option value="SERVER_ERROR">SERVER_ERROR (خطای سرور پیامک - ۵۰۰)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: TEST HISTORY -->
+    <div id="tab-history" class="tab-content" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📜 تاریخچه تست‌های انجام شده</span>
+                <button class="btn btn-secondary" onclick="clearHistory()">🗑️ پاکسازی تاریخچه</button>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>زمان تست</th>
+                            <th>شماره مقصد</th>
+                            <th>نتیجه</th>
+                            <th>کد وضعیت</th>
+                            <th>کد HTTP</th>
+                            <th>تأخیر</th>
+                            <th>حالت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">هیچ رکوردی در تاریخچه موجود نیست.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5: SMS API SPECS REFERENCE -->
+    <div id="tab-spec" class="tab-content" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📘 راهنمای جامع مشخصات فنی API درگاه پیامک (نسخه ۱.۰)</span>
+                <span class="info-pill">RFC / Official Spec</span>
+            </div>
+
+            <div style="font-size: 14px; line-height: 1.8; color: var(--text-muted); margin-bottom: 20px;">
+                این مینی‌اپلیکیشن دقیقاً بر اساس سند ارائه‌شده تدوین گردیده و کلیه الگوهای احراز هویت، ساختار درخواست‌ها، هدرها، کدهای وضعیت منطقی و بدنه پاسخ را به طور ۱۰۰٪ پیاده‌سازی می‌کند.
+            </div>
+
+            <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--accent);">۱. اطلاعات پایه سرویس (Endpoint Specifications)</h3>
+            <div class="table-responsive" style="margin-bottom: 24px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>پارامتر</th>
+                            <th>مقدار استاندارد</th>
+                            <th>توضیحات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Base URL</td>
+                            <td><code class="info-pill">https://api.sms-gateway.example.com</code></td>
+                            <td>آدرس پایه سرور جهت فراخوانی تمام متدها</td>
+                        </tr>
+                        <tr>
+                            <td>Endpoint</td>
+                            <td><code class="info-pill">POST /api/v1/sms/send</code></td>
+                            <td>آدرس سرویس ارسال تکی پیامک</td>
+                        </tr>
+                        <tr>
+                            <td>Content-Type</td>
+                            <td><code>application/json</code></td>
+                            <td>فرمت داده‌های ارسالی به صورت JSON می‌باشد (اجباری)</td>
+                        </tr>
+                        <tr>
+                            <td>Accept-Language</td>
+                            <td><code>fa</code> یا <code>en</code></td>
+                            <td>زبان متن پیام بازگشتی در فیلد message (اختیاری)</td>
+                        </tr>
+                        <tr>
+                            <td>Authorization</td>
+                            <td><code>Bearer {API_KEY}</code></td>
+                            <td>کلید احراز هویت سرویس (اجباری - در صورت فقدان خطای ۴۰۱ بازمی‌گردد)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--accent);">۲. ساختار بدنه درخواست (JSON Body)</h3>
+            <pre class="code-block">{
+  "destination": "09121234567",
+  "message": "متن دلخواه پیامک (حداکثر ۴۸۰ کاراکتر)"
+}</pre>
+
+            <h3 style="font-size: 15px; margin: 24px 0 12px; color: var(--accent);">۳. جدول کدهای وضعیت رایج (Status Codes & Error Mapping)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>کد منطقی (code)</th>
+                            <th>کد HTTP</th>
+                            <th>توضیح فارسی</th>
+                            <th>اقدام پیشنهادی</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="status-badge success">SENT_OK</span></td>
+                            <td>200</td>
+                            <td>پیام با موفقیت ارسال شد.</td>
+                            <td>درخواست به درستی ثبت و ارسال شده است.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-badge warning">INVALID_NUMBER</span></td>
+                            <td>400</td>
+                            <td>شماره مقصد نامعتبر است.</td>
+                            <td>شماره را اصلاح کنید (باید ۱۱ رقمی با فرمت 09 باشد).</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-badge warning">EMPTY_MESSAGE</span></td>
+                            <td>400</td>
+                            <td>پیامک خالی است.</td>
+                            <td>فیلد message نباید رشته خالی باشد.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-badge danger">UNAUTHORIZED</span></td>
+                            <td>401</td>
+                            <td>کلید API نامعتبر است.</td>
+                            <td>مقدار API Key را در تب تنظیمات بررسی نمایید.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-badge warning">RATE_LIMIT_EXCEEDED</span></td>
+                            <td>429</td>
+                            <td>تعداد درخواست‌ها بیش از حد مجاز است.</td>
+                            <td>نرخ ارسال پیامک‌ها در هر ثانیه/دقیقه را کاهش دهید.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-badge danger">SERVER_ERROR</span></td>
+                            <td>500</td>
+                            <td>خطای داخلی سرور پیامک.</td>
+                            <td>با پشتیبانی فنی ارائه‌دهنده سرویس پیامک تماس بگیرید.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Inspecting History Record -->
+<div id="inspect-modal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px;">🔍 جزئیات کامل درخواست و پاسخ</h3>
+            <button class="btn-icon" onclick="closeModal()">✕</button>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;" id="modal-meta-info"></div>
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">پاسخ سرور:</div>
+        <pre id="modal-resp-json" class="code-block"></pre>
+        <div style="font-size: 13px; font-weight: 600; margin-top: 14px; margin-bottom: 4px;">درخواست ارسالی:</div>
+        <pre id="modal-req-json" class="code-block"></pre>
+    </div>
+</div>
+
+<script>
+    let appConfig = {};
+    let testHistoryData = [];
+
+    // On Load
+    document.addEventListener("DOMContentLoaded", () => {
+        loadConfigData();
+        loadHistoryData();
+        updateCharCount();
+    });
+
+    // Theme Management
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute("data-theme");
+        const newTheme = current === "light" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("sms_tester_theme", newTheme);
+    }
+    const savedTheme = localStorage.getItem("sms_tester_theme");
+    if (savedTheme) {
+        document.documentElement.setAttribute("data-theme", savedTheme);
+    }
+
+    // Tabs
+    function switchTab(tabId) {
+        document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+        
+        event.target.classList.add("active");
+        const activeContent = document.getElementById("tab-" + tabId);
+        if (activeContent) activeContent.style.display = "block";
+
+        if (tabId === "history") loadHistoryData();
+    }
+
+    // API: Load Config
+    async function loadConfigData() {
+        try {
+            const res = await fetch("/api/config");
+            const data = await res.json();
+            if (data.status === "success") {
+                appConfig = data.config;
+                renderConfigForm(appConfig);
+                updateModeBadge(appConfig.sms_server.mock_mode);
+            }
+        } catch (e) {
+            console.error("Failed to load config:", e);
+        }
+    }
+
+    function renderConfigForm(cfg) {
+        const s = cfg.sms_server || {};
+        const d = cfg.defaults || {};
+
+        document.getElementById("cfg-base-url").value = s.base_url || "https://api.sms-gateway.example.com";
+        document.getElementById("cfg-endpoint").value = s.send_endpoint || "/api/v1/sms/send";
+        document.getElementById("cfg-api-key").value = s.api_key || "";
+        document.getElementById("cfg-language").value = s.accept_language || "fa";
+        document.getElementById("cfg-timeout").value = s.timeout_seconds || 10;
+        document.getElementById("cfg-verify-ssl").checked = s.verify_ssl !== false;
+        document.getElementById("cfg-mock-mode").checked = !!s.mock_mode;
+        document.getElementById("cfg-mock-scenario").value = s.mock_scenario || "SENT_OK";
+
+        if (d.phone) document.getElementById("phone-input").value = d.phone;
+        if (d.message) document.getElementById("message-input").value = d.message;
+
+        document.getElementById("current-endpoint-pill").textContent = `POST ${s.send_endpoint || "/api/v1/sms/send"}`;
+    }
+
+    // API: Save Config
+    async function saveConfig() {
+        const newCfg = {
+            sms_server: {
+                base_url: document.getElementById("cfg-base-url").value,
+                send_endpoint: document.getElementById("cfg-endpoint").value,
+                api_key: document.getElementById("cfg-api-key").value,
+                accept_language: document.getElementById("cfg-language").value,
+                timeout_seconds: parseFloat(document.getElementById("cfg-timeout").value) || 10,
+                verify_ssl: document.getElementById("cfg-verify-ssl").checked,
+                mock_mode: document.getElementById("cfg-mock-mode").checked,
+                mock_scenario: document.getElementById("cfg-mock-scenario").value
+            },
+            defaults: {
+                phone: document.getElementById("phone-input").value,
+                message: document.getElementById("message-input").value
+            }
+        };
+
+        try {
+            const res = await fetch("/api/config", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newCfg)
+            });
+            const data = await res.json();
+            if (data.status === "success") {
+                alert("✅ تنظیمات با موفقیت ذخیره و در سیستم اعمال شد.");
+                appConfig = data.config;
+                updateModeBadge(newCfg.sms_server.mock_mode);
+            } else {
+                alert("❌ خطا: " + data.message);
+            }
+        } catch (e) {
+            alert("❌ خطا در برقراری ارتباط با سرور: " + e);
+        }
+    }
+
+    // API: Reset Config
+    async function resetConfig() {
+        if (!confirm("آیا مطمئن هستید که می‌خواهید تنظیمات به مقادیر پیش‌فرض مستندات بازگردانده شود؟")) return;
+        try {
+            const res = await fetch("/api/config/reset", { method: "POST" });
+            const data = await res.json();
+            if (data.status === "success") {
+                alert("✅ تنظیمات بازنشانی شد.");
+                appConfig = data.config;
+                renderConfigForm(appConfig);
+                updateModeBadge(false);
+            }
+        } catch (e) {
+            alert("خطا: " + e);
+        }
+    }
+
+    // Toggle Mock Mode from Header
+    async function toggleMockMode() {
+        try {
+            const res = await fetch("/api/mock/toggle", { method: "POST" });
+            const data = await res.json();
+            if (data.status === "success") {
+                updateModeBadge(data.mock_mode);
+                document.getElementById("cfg-mock-mode").checked = data.mock_mode;
+            }
+        } catch (e) {
+            console.error("Toggle mock error:", e);
+        }
+    }
+
+    function updateModeBadge(isMock) {
+        const badge = document.getElementById("mode-badge");
+        if (isMock) {
+            badge.className = "pill-badge mock";
+            badge.textContent = "🧪 حالت شبیه‌ساز (Mock Simulation)";
+        } else {
+            badge.className = "pill-badge live";
+            badge.textContent = "🟢 سرور واقعی (Live Server)";
+        }
+    }
+
+    function toggleApiKeyVisibility() {
+        const input = document.getElementById("cfg-api-key");
+        input.type = input.type === "password" ? "text" : "password";
+    }
+
+    // Character Counter
+    function updateCharCount() {
+        const text = document.getElementById("message-input").value;
+        const len = text.length;
+        document.getElementById("char-count").textContent = `تعداد کاراکتر: ${len} / ۴۸۰`;
+        
+        let parts = 1;
+        if (len > 70) {
+            parts = Math.ceil(len / 67);
+        }
+        document.getElementById("part-count").textContent = `تعداد پیامک: ${parts} پیام`;
+    }
+
+    // Templates
+    function setTemplate(idx) {
+        const input = document.getElementById("message-input");
+        if (idx === 1) {
+            input.value = "تست ارسال پیامک و برقراری ارتباط با سامانه پیامک.";
+        } else if (idx === 2) {
+            input.value = "هشدار فوری: قطعی ارتباط با سرور دیتابیس Production\nسطح: Critical\nزمان: " + new Date().toLocaleTimeString('fa-IR');
+        } else if (idx === 3) {
+            const code = Math.floor(100000 + Math.random() * 900000);
+            input.value = `کد تایید ورود به سامانه: ${code}\nمدت اعتبار: ۲ دقیقه`;
+        }
+        updateCharCount();
+    }
+
+    // Send Test SMS
+    async function sendTestSms() {
+        const phone = document.getElementById("phone-input").value.trim();
+        const message = document.getElementById("message-input").value.trim();
+        const btn = document.getElementById("btn-send-sms");
+
+        if (!phone) {
+            alert("لطفاً شماره تلفن همراه مقصد را وارد نمایید.");
+            return;
+        }
+
+        btn.disabled = true;
+        document.getElementById("test-idle").style.display = "none";
+        document.getElementById("test-result-box").style.display = "none";
+        document.getElementById("test-loading").style.display = "block";
+        document.getElementById("test-elapsed").style.display = "none";
+
+        try {
+            const res = await fetch("/api/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ destination: phone, message: message })
+            });
+            const data = await res.json();
+            displaySendResult(data);
+        } catch (e) {
+            displaySendResult({
+                success: false,
+                code: "NETWORK_ERROR",
+                status_code: null,
+                elapsed_ms: 0,
+                explanation_fa: "خطا در برقراری ارتباط با مینی‌اپلیکیشن تستر: " + e,
+                raw_response: String(e)
+            });
+        } finally {
+            btn.disabled = false;
+            document.getElementById("test-loading").style.display = "none";
+        }
+    }
+
+    function displaySendResult(res) {
+        document.getElementById("test-result-box").style.display = "block";
+        const elapsedPill = document.getElementById("test-elapsed");
+        elapsedPill.style.display = "inline-block";
+        elapsedPill.textContent = `${res.elapsed_ms || 0} ms`;
+
+        const badge = document.getElementById("result-status-badge");
+        badge.className = `status-badge ${res.badge || (res.success ? "success" : "danger")}`;
+        badge.textContent = `کد: ${res.code || "UNKNOWN"}`;
+
+        const httpCodePill = document.getElementById("result-http-code");
+        httpCodePill.textContent = res.status_code ? `HTTP ${res.status_code}` : "NO HTTP STATUS";
+
+        document.getElementById("result-explanation").textContent = res.explanation_fa || res.message || "پاسخ دریافت شد.";
+
+        const hintDiv = document.getElementById("result-hint");
+        if (res.hint_fa) {
+            hintDiv.style.display = "block";
+            hintDiv.textContent = `💡 راهنما و اقدام: ${res.hint_fa}`;
+        } else {
+            hintDiv.style.display = "none";
+        }
+
+        document.getElementById("result-json-block").textContent = 
+            res.json_response ? JSON.stringify(res.json_response, null, 2) : (res.raw_response || "پاسخی دریافت نشد.");
+
+        document.getElementById("request-json-block").textContent = 
+            res.request_info ? JSON.stringify(res.request_info, null, 2) : "اطلاعات درخواست در دسترس نیست.";
+    }
+
+    // Diagnostics
+    async function runDiagnostics() {
+        const btn = document.getElementById("btn-run-diag");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner"></span> <span>در حال اجرای ارزیابی زیرساخت...</span>`;
+
+        // Reset UI indicators
+        for (let i = 0; i < 4; i++) {
+            const icon = document.querySelector(`#diag-step-${i} .diag-icon`);
+            icon.className = "diag-icon wait";
+            icon.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span>`;
+            const hint = document.getElementById(`diag-hint-${i}`);
+            if (hint) hint.remove();
+        }
+
+        try {
+            const res = await fetch("/api/diagnose", { method: "POST" });
+            const data = await res.json();
+            renderDiagnosticsResult(data);
+        } catch (e) {
+            alert("خطا در اجرای تست عیب‌یابی: " + e);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<span>⚡ اجرای مجدد تست سلامت زیرساخت</span>`;
+        }
+    }
+
+    function renderDiagnosticsResult(data) {
+        const summaryBox = document.getElementById("diag-summary-box");
+        summaryBox.style.display = "block";
+
+        const summaryText = document.getElementById("diag-summary-text");
+        const scoreBadge = document.getElementById("diag-score-badge");
+
+        if (data.overall_healthy) {
+            summaryText.textContent = "✅ وضعیت زیرساخت و شبکه مطلوب است. ارتباط با سرور پیامک بدون مانع برقرار می‌شود.";
+            scoreBadge.className = "status-badge success";
+            scoreBadge.textContent = `امتیاز سلامت: ${data.score}`;
+        } else {
+            summaryText.textContent = "⚠️ خطاهایی در لایه‌های شبکه یا اتصال شناسایی شد که مانع از کارکرد صحیح می‌شود.";
+            scoreBadge.className = "status-badge danger";
+            scoreBadge.textContent = `امتیاز سلامت: ${data.score}`;
+        }
+
+        data.steps.forEach((step, idx) => {
+            const item = document.getElementById(`diag-step-${idx}`);
+            if (!item) return;
+
+            const icon = item.querySelector(".diag-icon");
+            const desc = document.getElementById(`diag-desc-${idx}`);
+            const targetPill = document.getElementById(`diag-target-${idx}`);
+
+            if (step.target) targetPill.textContent = step.target;
+            if (step.latency_ms) targetPill.textContent += ` (${step.latency_ms} ms)`;
+
+            desc.textContent = step.message_fa || step.details || "";
+
+            if (step.success) {
+                icon.className = "diag-icon pass";
+                icon.textContent = "✓";
+            } else if (step.skipped) {
+                icon.className = "diag-icon wait";
+                icon.textContent = "—";
+            } else {
+                icon.className = "diag-icon fail";
+                icon.textContent = "✕";
+
+                // Add hint if available
+                if (step.hint_fa) {
+                    const existingHint = item.querySelector(".diag-hint");
+                    if (!existingHint) {
+                        const hintEl = document.createElement("div");
+                        hintEl.className = "diag-hint";
+                        hintEl.id = `diag-hint-${idx}`;
+                        hintEl.textContent = "💡 راهنما: " + step.hint_fa;
+                        item.querySelector(".diag-content").appendChild(hintEl);
+                    }
+                }
+            }
+        });
+    }
+
+    // History
+    async function loadHistoryData() {
+        try {
+            const res = await fetch("/api/history");
+            const data = await res.json();
+            testHistoryData = data.history || [];
+            renderHistoryTable(testHistoryData);
+        } catch (e) {
+            console.error("Failed to load history:", e);
+        }
+    }
+
+    function renderHistoryTable(records) {
+        const tbody = document.getElementById("history-table-body");
+        tbody.innerHTML = "";
+
+        if (records.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">هیچ رکوردی در تاریخچه موجود نیست.</td></tr>`;
+            return;
+        }
+
+        records.forEach((r, idx) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${r.timestamp}</td>
+                <td><code class="info-pill">${r.destination}</code></td>
+                <td>
+                    <span class="status-badge ${r.success ? 'success' : 'danger'}" style="padding: 2px 8px; font-size: 11px;">
+                        ${r.success ? 'موفق' : 'ناموفق'}
+                    </span>
+                </td>
+                <td><span style="font-weight: 600;">${r.code}</span></td>
+                <td><code class="info-pill">${r.status_code || '—'}</code></td>
+                <td>${r.elapsed_ms || '—'} ms</td>
+                <td><span class="info-pill">${r.mode === 'mock' ? 'شبیه‌ساز' : 'واقعی'}</span></td>
+                <td>
+                    <button class="pill-btn" onclick="inspectRecord(${idx})">مشاهده جزئیات</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function clearHistory() {
+        if (!confirm("آیا مایل به حذف تمام رکوردهای تاریخچه تست هستید؟")) return;
+        try {
+            await fetch("/api/history/clear", { method: "POST" });
+            loadHistoryData();
+        } catch (e) {
+            alert("خطا: " + e);
+        }
+    }
+
+    function inspectRecord(idx) {
+        const rec = testHistoryData[idx];
+        if (!rec) return;
+
+        document.getElementById("modal-meta-info").textContent = 
+            `زمان: ${rec.timestamp} | مقصد: ${rec.destination} | نتیجه: ${rec.code} (HTTP ${rec.status_code || 'None'}) | تأخیر: ${rec.elapsed_ms || 0}ms`;
+
+        document.getElementById("modal-resp-json").textContent = 
+            JSON.stringify(rec.full_result?.json_response || rec.full_result?.raw_response || {}, null, 2);
+
+        document.getElementById("modal-req-json").textContent = 
+            JSON.stringify(rec.full_result?.request_info || {}, null, 2);
+
+        document.getElementById("inspect-modal").style.display = "flex";
+    }
+
+    function closeModal() {
+        document.getElementById("inspect-modal").style.display = "none";
+    }
+</script>
+</body>
+</html>

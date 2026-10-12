@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="fa" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سامانه ارسال پیامک ردگیت | Redgate Alert SMS Relay</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --accent: #8b5cf6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Tahoma, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+    header { background: #0b1120; border-bottom: 1px solid var(--card-border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand h1 { font-size: 1.15rem; font-weight: 700; color: #fff; }
+    .brand small { color: var(--text-muted); font-size: 0.8rem; }
+    .badge-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+    .status-online { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    .nav-tabs { display: flex; gap: 8px; }
+    .tab-btn { background: transparent; border: 1px solid transparent; color: var(--text-muted); padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .tab-btn.active { color: #fff; background: var(--card-bg); border-color: var(--card-border); }
+
+    main { flex: 1; padding: 22px 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .stat-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+    .stat-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+    .stat-val { font-size: 1.55rem; font-weight: 700; color: #fff; }
+    .stat-sub { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Section Cards */
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 20px; margin-bottom: 22px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .card-title { font-size: 1.05rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .card-desc { font-size: 0.825rem; color: var(--text-muted); margin-top: 4px; }
+
+    /* Tables */
+    .table-container { overflow-x: auto; max-height: 420px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    th { background: rgba(15, 23, 42, 0.7); color: var(--text-muted); font-weight: 600; padding: 12px; border-bottom: 1px solid var(--card-border); position: sticky; top: 0; z-index: 10; }
+    td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; vertical-align: middle; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .tag-sev { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .sev-high { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .sev-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .sev-low { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+    .tag-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .status-sent { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .status-failed { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .status-dry_run { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    /* Form Styles */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 18px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.825rem; font-weight: 600; color: #cbd5e1; }
+    .hint { font-size: 0.75rem; color: var(--text-muted); }
+    input[type="text"], input[type="password"], input[type="number"], select, textarea {
+      background: #0f172a; border: 1px solid var(--card-border); color: #fff; padding: 9px 12px; border-radius: 6px; font-size: 0.85rem; outline: none; transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* Phone Tags Input */
+    .phones-box { background: #0f172a; border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; }
+    .phone-tag { background: #1e293b; border: 1px solid #475569; color: #f1f5f9; padding: 5px 12px; border-radius: 9999px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+    .phone-tag span.del { cursor: pointer; color: #94a3b8; font-weight: bold; }
+    .phone-tag span.del:hover { color: #ef4444; }
+    .phone-add-row { display: flex; gap: 8px; margin-top: 8px; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #059669; }
+    .btn-secondary { background: #334155; color: #f8fafc; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 5px 12px; font-size: 0.775rem; }
+
+    /* Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; width: 100%; max-width: 720px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 20px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; background: #0a0f1d; color: #38bdf8; white-space: pre-wrap; word-break: break-all; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid var(--card-border); display: flex; justify-content: flex-end; }
+
+    /* Console logs */
+    .console-box { background: #090d16; border: 1px solid var(--card-border); border-radius: 8px; padding: 14px; font-family: Consolas, Monaco, monospace; font-size: 0.8rem; color: #a5f3fc; height: 420px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; display: none; align-items: center; gap: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 2000; }
+    .toast-success { background: #065f46; color: #a7f3d0; border: 1px solid #10b981; }
+    .toast-error { background: #7f1d1d; color: #fecaca; border: 1px solid #ef4444; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .helper-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .pill { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; cursor: pointer; }
+    .pill:hover { background: var(--primary); color: #fff; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>📡 سامانه ارسال پیامک ردگیت <small style="font-size:0.8rem;">(Redgate Alert &rarr; SMS Relay)</small></h1>
+      <span class="badge-status status-online">
+        <span class="status-dot"></span> پورت <span id="hdr-port">8000</span> فعال
+      </span>
+      <span id="hdr-dryrun" style="display:none; background:#b45309; color:#fef3c7; font-size:0.75rem; padding:2px 8px; border-radius:4px; font-weight:600;">حالت تستی (آزمایشی)</span>
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-monitor')">📊 مانیتورینگ زنده (Monitor)</button>
+      <button class="tab-btn" onclick="switchTab('tab-settings')">⚙️ تنظیمات آسان (Settings)</button>
+      <button class="tab-btn" onclick="switchTab('tab-testing')">🧪 آزمایش و تست (Testing)</button>
+      <button class="tab-btn" onclick="switchTab('tab-logs')">📜 لاگ سیستم (Logs)</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- TAB 1: LIVE MONITOR -->
+    <div id="tab-monitor" class="tab-content active">
+      <!-- Status Notice Banner -->
+      <div id="status-banner" style="display:none; padding:12px 18px; border-radius:8px; margin-bottom:16px; font-size:0.875rem; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div id="status-banner-text"></div>
+        <div id="status-banner-action"></div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-title">هشدارهای دریافتی ردگیت</span>
+          <span class="stat-val" id="stat-alerts">0</span>
+          <span class="stat-sub">از Redgate SQL Monitor</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">پیامک‌های موفق</span>
+          <span class="stat-val" style="color:#34d399;" id="stat-sms-sent">0</span>
+          <span class="stat-sub">تحویل داده شده به اپراتور پیامک</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">پیامک‌های ناموفق</span>
+          <span class="stat-val" style="color:#f87171;" id="stat-sms-failed">0</span>
+          <span class="stat-sub">خطا در ارسال یا محدودیت زمانی</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">وضعیت پایگاه‌داده</span>
+          <span class="stat-val" id="stat-db-status" style="font-size:1.1rem; padding-top:6px;">SQL Server</span>
+          <span class="stat-sub" id="stat-db-sub">دیتابیس: AlertWebhook</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">درگاه پیامک فعال</span>
+          <span class="stat-val" id="stat-provider" style="font-size:1.05rem; padding-top:6px;">Mock Simulator</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+            <span class="stat-sub" id="stat-phones-count">0 شماره ثبت شده</span>
+            <button class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem;" onclick="toggleProviderMode()" id="btn-toggle-provider" title="تغییر بین حالت واقعی HTTP و آزمایشی Mock">🔄 تغییر درگاه</button>
+          </div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">حالت ارسال پیامک</span>
+          <span class="stat-val" id="stat-dispatch-mode" style="font-size:1.05rem; padding-top:6px; color:#38bdf8;">🟢 خودکار (Auto)</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+            <span class="stat-sub" id="stat-dispatch-sub">ارسال به تمام شماره‌ها با دریافت هشدار</span>
+            <button class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem;" onclick="toggleDispatchMode()" id="btn-toggle-dispatch" title="تغییر سریع بین خودکار و دستی">🔄 تغییر حالت</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Webhooks -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📥 هشدارهای دریافتی وب‌هوک (Incoming Redgate Alerts)</div>
+            <div class="card-desc">هشدارهایی که از ردگیت به آدرس <code>/webhook/redgate</code> ارسال شده و در جدول دیتابیس ذخیره شده‌اند</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; cursor:pointer;">
+              <input type="checkbox" id="auto-refresh-toggle" checked> بروزرسانی خودکار (هر ۳ ثانیه)
+            </label>
+            <button class="btn btn-secondary btn-sm" onclick="fetchRecentData()">🔄 بروزرسانی دستی</button>
+          </div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>زمان (Time)</th>
+                <th>عنوان هشدار (Alert Name)</th>
+                <th>سطح خطر (Severity)</th>
+                <th>سرور / دیتابیس (Target)</th>
+                <th>وضعیت (Status)</th>
+                <th>آی‌پی فرستنده (IP)</th>
+                <th>عملیات (JSON / ارسال دستی)</th>
+              </tr>
+            </thead>
+            <tbody id="alerts-table-body">
+              <tr><td colspan="7" style="text-align:center; color:#94a3b8;">هنوز هشداری دریافت نشده است. برای تست روی تب "آزمایش و تست" کلیک کنید.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Outgoing SMS Logs -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📱 گزارش پیامک‌های ارسال شده (SMS Delivery Logs)</div>
+            <div class="card-desc">پیامک‌هایی که به شماره‌های موبایل مدیران سیستم ارسال شده‌اند</div>
+          </div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>زمان ارسال</th>
+                <th>شماره گیرنده</th>
+                <th>عنوان هشدار</th>
+                <th>متن پیامک ارسالی</th>
+                <th>درگاه</th>
+                <th>وضعیت ارسال</th>
+                <th>پاسخ سرور پیامک</th>
+              </tr>
+            </thead>
+            <tbody id="sms-table-body">
+              <tr><td colspan="7" style="text-align:center; color:#94a3b8;">هنوز پیامکی در لاگ ثبت نشده است.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: VISUAL SETTINGS -->
+    <div id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📱 شماره‌های موبایل دریافت‌کننده پیامک (Recipients)</div>
+            <div class="card-desc">هر هشداری که ردگیت بفرستد، به تمام شماره‌های این لیست پیامک خواهد شد.</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>شماره‌های موبایل فعال در سیستم:</label>
+          <div class="phones-box" id="phones-container"></div>
+          <div class="phone-add-row">
+            <input type="text" id="new-phone-input" placeholder="مثال: 09121234567" style="width:240px;" onkeydown="if(event.key==='Enter'){addPhone();}">
+            <button class="btn btn-primary btn-sm" onclick="addPhone()">+ افزودن شماره موبایل</button>
+          </div>
+          <div class="hint">شماره‌ها را با فرمت استاندارد (مثل 09121234567 یا 09191234567) وارد کنید. با زدن ضربدر روی هر شماره، آن شماره حذف می‌شود.</div>
+        </div>
+      </div>
+
+      <!-- SMS Gateway Config -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🌐 تنظیمات درگاه ارسال پیامک (SMS Gateway)</div>
+            <div class="card-desc">اطلاعات درگاه پیامک سازمانی (مثل سامانه مگفا، کاوه‌نگار یا هر درگاه دیگر)</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>نحوه ارسال پیامک‌ها (SMS Dispatch Mode)</label>
+            <select id="cfg-sms-dispatch-mode" onchange="updateDispatchModeBadge(this.value)">
+              <option value="auto">🟢 خودکار (Automatic / Default - ارسال به تمام شماره‌ها با دریافت هشدار)</option>
+              <option value="manual">🟡 دستی / محیط تست و توسعه (Manual Mode - فقط ذخیره لاگ، بدون ارسال خودکار)</option>
+            </select>
+            <div class="hint">در حالت «دستی»، سیستم هشدارهای ردگیت را ذخیره می‌کند اما به شماره‌ها پیامک انبوه نمی‌فرستد؛ می‌توانید تک‌تک پیامک‌ها را دستی یا تستی بفرستید.</div>
+          </div>
+          <div class="form-group">
+            <label>حالت درگاه پیامک (Provider Mode)</label>
+            <select id="cfg-sms-provider">
+              <option value="http">درگاه واقعی (Real SMS Gateway - ارسال واقعی پیامک)</option>
+              <option value="mock">حالت آزمایشی (Simulation / Mock - بدون ارسال واقعی)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>آدرس اینترنتی درگاه (Gateway URL)</label>
+            <input type="text" id="cfg-sms-url" placeholder="https://api.sms-gateway.example.com/v1/sms/send">
+          </div>
+          <div class="form-group">
+            <label>نوع احراز هویت درگاه (Auth Type)</label>
+            <select id="cfg-sms-authtype">
+              <option value="bearer">توکن Bearer (Authorization: Bearer &lt;key&gt;)</option>
+              <option value="header">هدر سفارشی (Custom Header مانند X-API-KEY)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>کلید دسترسی / توکن درگاه (API Key)</label>
+            <input type="password" id="cfg-sms-key" placeholder="توکن دریافتی از سامانه پیامک را وارد کنید">
+          </div>
+          <div class="form-group">
+            <label>نام هدر سفارشی (اگر هدر سفارشی انتخاب شد)</label>
+            <input type="text" id="cfg-sms-hdrname" placeholder="Authorization یا X-API-KEY" value="Authorization">
+          </div>
+          <div class="form-group">
+            <label>متد درخواست (HTTP Method)</label>
+            <select id="cfg-sms-method">
+              <option value="POST">POST (ارسال داده با بدنه JSON)</option>
+              <option value="GET">GET (ارسال داده با پارامترهای آدرس)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>نام فیلد شماره گیرنده در وب‌سرویس</label>
+            <input type="text" id="cfg-sms-destfield" placeholder="destination" value="destination">
+            <div class="hint">مثلاً <code>destination</code>، <code>mobile</code>، <code>phone</code> یا <code>receptor</code></div>
+          </div>
+          <div class="form-group">
+            <label>نام فیلد متن پیامک در وب‌سرویس</label>
+            <input type="text" id="cfg-sms-msgfield" placeholder="message" value="message">
+            <div class="hint">مثلاً <code>message</code>، <code>text</code> یا <code>body</code></div>
+          </div>
+        </div>
+
+        <!-- Manual SMS Test & Direct Gateway Diagnostics Box -->
+        <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
+          <div style="font-weight:600; font-size:0.95rem; color:#38bdf8; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+            🧪 تست دستی و عیب‌یابی مستقیم سرور پیامک (Manual SMS Test & Gateway Diagnostics)
+          </div>
+          <div class="hint" style="margin-bottom:12px;">
+            شماره موبایل و متن دلخواه را وارد کنید تا درخواست مستقیماً به سرور پیامک (با تنظیمات همین فرم) ارسال شده و پاسخ خام درگاه بدون ارسال انبوه به دیگران بررسی شود:
+          </div>
+          <div class="form-grid" style="margin-bottom:12px;">
+            <div class="form-group">
+              <label>شماره موبایل گیرنده تست</label>
+              <input type="text" id="cfg-sms-test-phone" placeholder="مثال: 09121234567">
+            </div>
+            <div class="form-group">
+              <label>متن پیامک آزمایشی</label>
+              <input type="text" id="cfg-sms-test-msg" value="تست اتصال مستقیم به درگاه پیامک ردگیت">
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button class="btn btn-primary" id="btn-cfg-sms-test" onclick="sendDirectGatewayTest()">🚀 ارسال پیامک تستی به سرور پیامک (Send to SMS Server)</button>
+            <span style="font-size:0.78rem; color:var(--text-muted);">(درخواست مستقیماً به آدرس سرور پیامک بالا فرستاده شده و خطای احتمالی پنل نمایش داده می‌شود)</span>
+          </div>
+          <div id="cfg-sms-test-result" style="display:none; margin-top:14px; padding:14px; border-radius:8px; font-family:Consolas, Monaco, monospace; font-size:0.82rem; line-height:1.5;"></div>
+        </div>
+      </div>
+
+      <!-- SQL Server Database Configuration -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🗄️ تنظیمات پایگاه‌داده Microsoft SQL Server</div>
+            <div class="card-desc">اتصال خودکار به دیتابیس برای ذخیره هشدارهای ردگیت و آرشیو لاگ‌های پیامک</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="testDbConnection()">🔌 تست اتصال به دیتابیس</button>
+            <button class="btn btn-secondary btn-sm" onclick="initDbTables()">🛠️ بررسی و ساخت خودکار جدول‌ها</button>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>ذخیره‌سازی در SQL Server</label>
+            <select id="cfg-db-enabled">
+              <option value="true">فعال (ذخیره در جدول‌های SQL Server)</option>
+              <option value="false">غیرفعال (فقط ذخیره در فایل محلی SQLite)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>نام سرور / اینستنس (SQL Server Instance)</label>
+            <input type="text" id="cfg-db-server" placeholder=".\SQLEXPRESS یا localhost یا نام سرور" value=".\SQLEXPRESS">
+          </div>
+          <div class="form-group">
+            <label>پورت (پیش‌فرض 1433)</label>
+            <input type="number" id="cfg-db-port" placeholder="1433" value="1433">
+          </div>
+          <div class="form-group">
+            <label>نام دیتابیس (Database Name)</label>
+            <input type="text" id="cfg-db-name" placeholder="AlertWebhook" value="AlertWebhook">
+          </div>
+          <div class="form-group">
+            <label>نوع احراز هویت (Authentication)</label>
+            <select id="cfg-db-auth" onchange="toggleDbAuthFields()">
+              <option value="windows">احراز هویت ویندوز (Windows Authentication - بدون نیاز به پسورد)</option>
+              <option value="sql">نام کاربری و پسورد SQL (SQL Server Authentication)</option>
+            </select>
+          </div>
+          <div class="form-group" id="group-db-user">
+            <label>نام کاربری SQL (Username)</label>
+            <input type="text" id="cfg-db-user" placeholder="sa" value="sa">
+          </div>
+          <div class="form-group" id="group-db-pass">
+            <label>رمز عبور SQL (Password)</label>
+            <input type="password" id="cfg-db-pass" placeholder="رمز عبور کاربر sa">
+          </div>
+          <div class="form-group">
+            <label>نام جدول هشدارها (Alerts Table)</label>
+            <input type="text" id="cfg-db-tbl-alerts" value="alerts">
+          </div>
+          <div class="form-group">
+            <label>نام جدول لاگ پیامک (SMS Queue Table)</label>
+            <input type="text" id="cfg-db-tbl-sms" value="sms_queue">
+          </div>
+        </div>
+        <div id="db-test-result" style="display:none; padding:10px 14px; border-radius:6px; font-size:0.825rem; margin-top:8px;"></div>
+      </div>
+
+      <!-- SMS Templates -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📝 قالب متن پیامک‌های ارسالی (SMS Templates)</div>
+            <div class="card-desc">متنی که برای هشدارهای فوری، متوسط و معمولی روی گوشی ارسال می‌شود</div>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <span style="font-size:0.8rem; color:var(--text-muted);">برای اضافه کردن مقادیر داینامیک، روی برچسب‌های زیر کلیک کنید:</span>
+          <div class="helper-pills">
+            <span class="pill" onclick="insertPlaceholder('{alert_name}')">{alert_name} نام هشدار</span>
+            <span class="pill" onclick="insertPlaceholder('{target}')">{target} سرور یا دیتابیس</span>
+            <span class="pill" onclick="insertPlaceholder('{severity}')">{severity} سطح خطر</span>
+            <span class="pill" onclick="insertPlaceholder('{status}')">{status} وضعیت</span>
+            <span class="pill" onclick="insertPlaceholder('{message}')">{message} توضیحات خطا</span>
+            <span class="pill" onclick="insertPlaceholder('{timestamp}')">{timestamp} زمان</span>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>قالب پیامک برای خطاهای فوری و بحرانی (High / Critical)</label>
+            <textarea id="cfg-tmpl-high">هشدار فوری: {alert_name}
+سرور: {target}
+سطح: {severity}
+وضعیت: {status}
+{message}</textarea>
+          </div>
+          <div class="form-group">
+            <label>قالب پیامک برای هشدارهای متوسط (Medium)</label>
+            <textarea id="cfg-tmpl-medium">هشدار: {alert_name}
+سرور: {target}
+سطح: {severity}
+وضعیت: {status}</textarea>
+          </div>
+          <div class="form-group">
+            <label>قالب پیامک برای هشدارهای سطح پایین (Low / Info)</label>
+            <textarea id="cfg-tmpl-low">اطلاعیه: {alert_name} در {target} [{severity}]</textarea>
+          </div>
+          <div class="form-group">
+            <label>حداکثر طول مجاز پیامک (کاراکتر)</label>
+            <input type="number" id="cfg-tmpl-maxlen" value="480">
+            <div class="hint">استاندارد پیامک فارسی/انگلیسی سازمانی تا ۴۸۰ کاراکتر است.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Server & Security -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🔌 پورت و تنظیمات سرور وب‌هوک</div>
+            <div class="card-desc">پورتی که ردگیت هشدارهایش را به آن می‌فرستد</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>پورت سرور وب‌هوک (Port)</label>
+            <input type="number" id="cfg-srv-port" value="8000">
+            <div class="hint">پورت پیش‌فرض ۸۰۰۰ است. در ردگیت باید آدرس http://&lt;IP&gt;:8000/webhook/redgate ست شود.</div>
+          </div>
+          <div class="form-group">
+            <label>توکن اختیاری وب‌هوک (اگر در ردگیت رمز گذاشته‌اید)</label>
+            <input type="text" id="cfg-srv-token" placeholder="اگر ردگیت توکنی نمی‌فرستد این فیلد را خالی بگذارید">
+          </div>
+          <div class="form-group">
+            <label>حالت شبیه‌سازی بدون ارسال (Dry-Run)</label>
+            <select id="cfg-dryrun">
+              <option value="false">غیرفعال (ارسال واقعی به پیامک)</option>
+              <option value="true">فعال (فقط تست بدون ارسال به گوشی)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Button -->
+      <div style="display:flex; justify-content:flex-end; gap:12px; margin-bottom:40px;">
+        <button class="btn btn-success" style="padding:14px 34px; font-size:1.05rem;" onclick="saveConfig()">💾 ذخیره تمام تنظیمات (Save Settings)</button>
+      </div>
+    </div>
+
+    <!-- TAB 3: TESTING TOOLS -->
+    <div id="tab-testing" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📱 ارسال پیامک تستی به موبایل (Test SMS)</div>
+            <div class="card-desc">شماره موبایل خود را وارد کرده و روی دکمه کلیک کنید تا فوراً از سلامت درگاه پیامک مطمئن شوید.</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>شماره موبایل تست گیرنده</label>
+            <input type="text" id="test-sms-phone" placeholder="مثال: 09121234567">
+          </div>
+          <div class="form-group">
+            <label>متن پیامک تست</label>
+            <input type="text" id="test-sms-msg" value="تست سامانه ارسال پیامک هشدار ردگیت - پایگاه‌داده">
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn btn-primary" id="btn-tab3-test-sms" onclick="sendTestSms()">🚀 ارسال پیامک تستی به گوشی</button>
+        </div>
+        <div id="test-sms-result" style="display:none; margin-top:14px; padding:12px; border-radius:6px; font-family:monospace; font-size:0.8rem;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📥 شبیه‌سازی ورود هشدار از ردگیت (Simulate Redgate Alert)</div>
+            <div class="card-desc">یک هشدار فرضی شبیه به ردگیت بفرستید تا ذخیره در دیتابیس و ارسال پیامک را با چشم ببینید.</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="setSamplePayload('deadlock')">⚡ هشدار Deadlock در SQL Server</button>
+          <button class="btn btn-secondary btn-sm" onclick="setSamplePayload('cpu')">🔥 مصرف بالای پردازنده (High CPU)</button>
+          <button class="btn btn-secondary btn-sm" onclick="setSamplePayload('disk')">💾 کمبود فضای دیسک (Low Disk)</button>
+          <button class="btn btn-secondary btn-sm" onclick="setSamplePayload('job')">⚠️ خطای اجرای Job در SQL Server</button>
+        </div>
+        <div class="form-group">
+          <label>متن خام JSON هشدار:</label>
+          <textarea id="sim-payload" style="min-height:180px; font-family:monospace; font-size:0.8rem; color:#38bdf8;"></textarea>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="btn btn-success" onclick="fireSimulatedWebhook()">▶️ ارسال این هشدار به سیستم (تست کامل)</button>
+        </div>
+        <div id="sim-result" style="display:none; margin-top:14px; padding:12px; border-radius:6px; font-family:monospace; font-size:0.8rem;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: LIVE LOGS -->
+    <div id="tab-logs" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📋 مشاهده لاگ‌های زنده سیستم (System Logs)</div>
+            <div class="card-desc">تمام اتفاقات و رویدادهای پشت صحنه بدون هیچ ابهامی در اینجا نمایش داده می‌شوند</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; cursor:pointer;">
+              <input type="checkbox" id="logs-autoscroll" checked> اسکرول خودکار به انتهای لاگ
+            </label>
+            <button class="btn btn-secondary btn-sm" onclick="fetchLiveLogs()">🔄 بروزرسانی لاگ‌ها</button>
+          </div>
+        </div>
+        <div class="console-box" id="console-output">در حال خواندن لاگ‌ها...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal for Raw JSON Payload -->
+  <div class="modal-backdrop" id="payload-modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 style="font-size:1rem; color:#fff;" id="modal-title">متن کامل JSON دریافتی از ردگیت</h3>
+        <button style="background:transparent; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal()">بستن پنجره</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Manual Alert Send -->
+  <div class="modal-backdrop" id="manual-alert-modal" onclick="closeManualAlertModal(event)">
+    <div class="modal-content" style="max-width:540px;" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 style="font-size:1rem; color:#fff;" id="manual-alert-title">📲 ارسال دستی پیامک هشدار به سرور پیامک</h3>
+        <button style="background:transparent; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;" onclick="closeManualAlertModal()">✕</button>
+      </div>
+      <div style="padding:18px; display:flex; flex-direction:column; gap:12px;">
+        <input type="hidden" id="manual-alert-id">
+        <input type="hidden" id="manual-alert-name">
+        <div class="form-group">
+          <label>شماره موبایل گیرنده:</label>
+          <input type="text" id="manual-alert-phone" placeholder="مثال: 09121234567">
+          <div id="manual-quick-phones" class="helper-pills"></div>
+        </div>
+        <div class="form-group">
+          <label>متن پیامک ارسالی به درگاه:</label>
+          <textarea id="manual-alert-msg" rows="4" style="font-size:0.85rem; font-family:Tahoma, sans-serif;"></textarea>
+        </div>
+        <div id="manual-alert-result" style="display:none; padding:12px; border-radius:6px; font-family:Consolas, monospace; font-size:0.8rem; line-height:1.5;"></div>
+      </div>
+      <div class="modal-footer" style="gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="closeManualAlertModal()">بستن</button>
+        <button class="btn btn-primary btn-sm" id="btn-manual-send" onclick="submitManualAlertSend()">🚀 ارسال مستقیم به درگاه پیامک</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast-box"></div>
+
+  <script>
+    let currentConfig = {};
+    let activePhoneNumbers = [];
+
+    function showToast(msg, type = "success") {
+      const box = document.getElementById("toast-box");
+      box.textContent = msg;
+      box.className = "toast " + (type === "success" ? "toast-success" : "toast-error");
+      box.style.display = "flex";
+      setTimeout(() => { box.style.display = "none"; }, 3500);
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      const activeBtn = Array.from(document.querySelectorAll(".tab-btn")).find(b => b.getAttribute("onclick").includes(tabId));
+      if (activeBtn) activeBtn.classList.add("active");
+
+      if (tabId === "tab-logs") {
+        fetchLiveLogs();
+      } else if (tabId === "tab-monitor") {
+        fetchRecentData();
+      }
+    }
+
+    function toggleDbAuthFields() {
+      const auth = document.getElementById("cfg-db-auth").value;
+      const isSql = auth === "sql";
+      document.getElementById("group-db-user").style.display = isSql ? "flex" : "none";
+      document.getElementById("group-db-pass").style.display = isSql ? "flex" : "none";
+    }
+
+    // Phone numbers tag management
+    function renderPhones() {
+      const container = document.getElementById("phones-container");
+      container.innerHTML = "";
+      if (activePhoneNumbers.length === 0) {
+        container.innerHTML = `<span style="color:#64748b; font-size:0.8rem; align-self:center;">هنوز شماره‌ای ثبت نشده است. در کادر زیر شماره موبایل را وارد کرده و دکمه افزودن را بزنید.</span>`;
+        return;
+      }
+      activePhoneNumbers.forEach((p, idx) => {
+        const tag = document.createElement("div");
+        tag.className = "phone-tag";
+        tag.innerHTML = `<span>📞 ${p}</span><span class="del" title="حذف این شماره" onclick="removePhone(${idx})">✕</span>`;
+        container.appendChild(tag);
+      });
+      document.getElementById("stat-phones-count").textContent = `${activePhoneNumbers.length} شماره گیرنده فعال`;
+    }
+
+    function addPhone() {
+      const input = document.getElementById("new-phone-input");
+      const val = input.value.trim();
+      if (!val) return;
+      if (activePhoneNumbers.includes(val)) {
+        showToast("این شماره موبایل قبلا اضافه شده است", "error");
+        return;
+      }
+      activePhoneNumbers.push(val);
+      input.value = "";
+      renderPhones();
+    }
+
+    function removePhone(idx) {
+      activePhoneNumbers.splice(idx, 1);
+      renderPhones();
+    }
+
+    function insertPlaceholder(str) {
+      const ta = document.getElementById("cfg-tmpl-high");
+      ta.value += str;
+      ta.focus();
+    }
+
+    // Fetch and populate configuration
+    async function loadConfig() {
+      try {
+        const res = await fetch("/api/config");
+        if (!res.ok) throw new Error("خطا در دریافت تنظیمات");
+        const cfg = await res.json();
+        currentConfig = cfg;
+
+        // Port & dry-run
+        const port = cfg.server?.port || 8000;
+        document.getElementById("hdr-port").textContent = port;
+        document.getElementById("cfg-srv-port").value = port;
+        document.getElementById("cfg-srv-token").value = cfg.server?.auth_token || "";
+
+        const dryRun = Boolean(cfg.dry_run);
+        document.getElementById("cfg-dryrun").value = dryRun ? "true" : "false";
+        document.getElementById("hdr-dryrun").style.display = dryRun ? "inline-block" : "none";
+
+        // Phone numbers
+        activePhoneNumbers = cfg.phone_numbers || [];
+        if (activePhoneNumbers.length === 0 && cfg.routing?.rules) {
+          cfg.routing.rules.forEach(r => {
+            (r.recipients || []).forEach(rec => {
+              if (rec.phone && !activePhoneNumbers.includes(rec.phone)) activePhoneNumbers.push(rec.phone);
+            });
+          });
+        }
+        renderPhones();
+
+        // SMS Config
+        const sms = cfg.sms || {};
+        document.getElementById("cfg-sms-provider").value = sms.provider || "mock";
+        document.getElementById("cfg-sms-dispatch-mode").value = sms.dispatch_mode || "auto";
+        updateDispatchModeBadge(sms.dispatch_mode || "auto");
+        const http = sms.http || {};
+        document.getElementById("cfg-sms-url").value = http.url || "https://api.sms-gateway.example.com/v1/sms/send";
+        document.getElementById("cfg-sms-authtype").value = http.auth_type || "bearer";
+        document.getElementById("cfg-sms-key").value = http.api_key || "";
+        document.getElementById("cfg-sms-hdrname").value = http.auth_header_name || "Authorization";
+        document.getElementById("cfg-sms-method").value = http.method || "POST";
+        document.getElementById("cfg-sms-destfield").value = http.destination_field || "destination";
+        document.getElementById("cfg-sms-msgfield").value = http.message_field || "message";
+
+        // Database Config
+        const db = cfg.database || {};
+        document.getElementById("cfg-db-enabled").value = db.enabled ? "true" : "false";
+        document.getElementById("cfg-db-server").value = db.server || ".\\SQL2025";
+        document.getElementById("cfg-db-port").value = db.port || 1433;
+        document.getElementById("cfg-db-name").value = db.database || "AlertWebhook";
+        document.getElementById("cfg-db-auth").value = db.auth_type || "windows";
+        document.getElementById("cfg-db-user").value = db.username || "sa";
+        document.getElementById("cfg-db-pass").value = db.password || "";
+        document.getElementById("cfg-db-tbl-alerts").value = db.alerts_table || "alerts";
+        document.getElementById("cfg-db-tbl-sms").value = db.sms_table || "sms_queue";
+        toggleDbAuthFields();
+
+        // Templates
+        const tmpl = cfg.templates || {};
+        if (tmpl.high) document.getElementById("cfg-tmpl-high").value = tmpl.high;
+        if (tmpl.medium) document.getElementById("cfg-tmpl-medium").value = tmpl.medium;
+        if (tmpl.low) document.getElementById("cfg-tmpl-low").value = tmpl.low;
+        if (tmpl.max_length) document.getElementById("cfg-tmpl-maxlen").value = tmpl.max_length;
+
+      } catch (err) {
+        showToast("خطا در بارگذاری تنظیمات: " + err.message, "error");
+      }
+    }
+
+    async function saveConfig() {
+      try {
+        const portVal = parseInt(document.getElementById("cfg-srv-port").value, 10) || 8000;
+        const dryRunVal = document.getElementById("cfg-dryrun").value === "true";
+        const dbEnabledVal = document.getElementById("cfg-db-enabled").value === "true";
+
+        const updatedConfig = {
+          ...currentConfig,
+          server: {
+            ...currentConfig.server,
+            host: currentConfig.server?.host || "0.0.0.0",
+            port: portVal,
+            auth_token: document.getElementById("cfg-srv-token").value.trim()
+          },
+          dry_run: dryRunVal,
+          phone_numbers: activePhoneNumbers,
+          sms: {
+            ...currentConfig.sms,
+            provider: document.getElementById("cfg-sms-provider").value,
+            dispatch_mode: document.getElementById("cfg-sms-dispatch-mode").value,
+            http: {
+              ...(currentConfig.sms?.http || {}),
+              url: document.getElementById("cfg-sms-url").value.trim(),
+              auth_type: document.getElementById("cfg-sms-authtype").value,
+              api_key: document.getElementById("cfg-sms-key").value.trim(),
+              auth_header_name: document.getElementById("cfg-sms-hdrname").value.trim(),
+              method: document.getElementById("cfg-sms-method").value,
+              destination_field: document.getElementById("cfg-sms-destfield").value.trim(),
+              message_field: document.getElementById("cfg-sms-msgfield").value.trim(),
+            }
+          },
+          database: {
+            enabled: dbEnabledVal,
+            type: "mssql",
+            server: document.getElementById("cfg-db-server").value.trim(),
+            port: parseInt(document.getElementById("cfg-db-port").value, 10) || 1433,
+            database: document.getElementById("cfg-db-name").value.trim(),
+            auth_type: document.getElementById("cfg-db-auth").value,
+            username: document.getElementById("cfg-db-user").value.trim(),
+            password: document.getElementById("cfg-db-pass").value,
+            alerts_table: document.getElementById("cfg-db-tbl-alerts").value.trim(),
+            sms_table: document.getElementById("cfg-db-tbl-sms").value.trim(),
+          },
+          templates: {
+            ...(currentConfig.templates || {}),
+            high: document.getElementById("cfg-tmpl-high").value,
+            medium: document.getElementById("cfg-tmpl-medium").value,
+            low: document.getElementById("cfg-tmpl-low").value,
+            default: document.getElementById("cfg-tmpl-high").value,
+            max_length: parseInt(document.getElementById("cfg-tmpl-maxlen").value, 10) || 480
+          }
+        };
+
+        const res = await fetch("/api/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedConfig)
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "خطا در ذخیره‌سازی");
+
+        showToast("تنظیمات با موفقیت ذخیره و فوراً اعمال شد!", "success");
+        await loadConfig();
+        await fetchRecentData();
+      } catch (err) {
+        showToast("خطا: " + err.message, "error");
+      }
+    }
+
+    // Database test connection
+    async function testDbConnection() {
+      const box = document.getElementById("db-test-result");
+      box.style.display = "block";
+      box.style.background = "#1e293b";
+      box.style.color = "#93c5fd";
+      box.innerHTML = "در حال بررسی اتصال به دیتابیس SQL Server...";
+
+      const dbPayload = {
+        server: document.getElementById("cfg-db-server").value.trim(),
+        port: parseInt(document.getElementById("cfg-db-port").value, 10) || 1433,
+        database: document.getElementById("cfg-db-name").value.trim(),
+        auth_type: document.getElementById("cfg-db-auth").value,
+        username: document.getElementById("cfg-db-user").value.trim(),
+        password: document.getElementById("cfg-db-pass").value,
+      };
+
+      try {
+        const res = await fetch("/api/test/db", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dbPayload)
+        });
+        let data;
+        try {
+          data = await res.json();
+        } catch (parseErr) {
+          const rawText = await res.text().catch(() => "");
+          throw new Error(`پاسخ سرور نامعتبر است (کد ${res.status}): ${rawText.substring(0, 150)}`);
+        }
+        if (data.success) {
+          box.style.background = "rgba(16, 185, 129, 0.2)";
+          box.style.color = "#34d399";
+          box.style.border = "1px solid #10b981";
+          box.innerHTML = `<strong>✅ اتصال با موفقیت برقرار شد!</strong><br>${data.message}<br><small>سرور: ${data.version || ''}</small>`;
+        } else {
+          box.style.background = "rgba(239, 68, 68, 0.2)";
+          box.style.color = "#f87171";
+          box.style.border = "1px solid #ef4444";
+          box.innerHTML = `<strong>❌ اتصال برقرار نشد:</strong><br>${data.message}`;
+        }
+      } catch (err) {
+        box.style.background = "rgba(239, 68, 68, 0.2)";
+        box.style.color = "#f87171";
+        box.innerHTML = "خطا در ارسال درخواست: " + err.message;
+      }
+    }
+
+    async function initDbTables() {
+      const box = document.getElementById("db-test-result");
+      box.style.display = "block";
+      box.style.background = "#1e293b";
+      box.style.color = "#93c5fd";
+      box.innerHTML = "در حال ساخت و بررسی دیتابیس و جدول‌ها...";
+
+      const dbPayload = {
+        server: document.getElementById("cfg-db-server").value.trim(),
+        port: parseInt(document.getElementById("cfg-db-port").value, 10) || 1433,
+        database: document.getElementById("cfg-db-name").value.trim(),
+        auth_type: document.getElementById("cfg-db-auth").value,
+        username: document.getElementById("cfg-db-user").value.trim(),
+        password: document.getElementById("cfg-db-pass").value,
+        alerts_table: document.getElementById("cfg-db-tbl-alerts").value.trim(),
+        sms_table: document.getElementById("cfg-db-tbl-sms").value.trim(),
+      };
+
+      try {
+        const res = await fetch("/api/test/db/init", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dbPayload)
+        });
+        let data;
+        try {
+          data = await res.json();
+        } catch (parseErr) {
+          const rawText = await res.text().catch(() => "");
+          throw new Error(`پاسخ سرور نامعتبر است (کد ${res.status}): ${rawText.substring(0, 150)}`);
+        }
+        if (data.success) {
+          box.style.background = "rgba(16, 185, 129, 0.2)";
+          box.style.color = "#34d399";
+          box.style.border = "1px solid #10b981";
+          box.innerHTML = `<strong>✅ دیتابیس و جدول‌ها آماده‌اند!</strong><br>${data.message}`;
+        } else {
+          box.style.background = "rgba(239, 68, 68, 0.2)";
+          box.style.color = "#f87171";
+          box.style.border = "1px solid #ef4444";
+          box.innerHTML = `<strong>❌ خطا در ایجاد جدول‌ها:</strong><br>${data.message}`;
+        }
+      } catch (err) {
+        box.style.background = "rgba(239, 68, 68, 0.2)";
+        box.style.color = "#f87171";
+        box.innerHTML = "خطا: " + err.message;
+      }
+    }
+
+    // Live Monitoring Data
+    let isFetchingRecentData = false;
+    async function fetchRecentData() {
+      if (isFetchingRecentData) return;
+      isFetchingRecentData = true;
+      try {
+        const statusRes = await fetch("/api/status");
+        if (statusRes.ok) {
+          const st = await statusRes.json();
+          document.getElementById("stat-alerts").textContent = st.total_alerts || 0;
+          document.getElementById("stat-sms-sent").textContent = st.sms_sent || 0;
+          document.getElementById("stat-sms-failed").textContent = st.sms_failed || 0;
+          document.getElementById("stat-db-status").textContent = st.db_enabled ? "SQL Server (متصل)" : "SQLite محلی";
+          document.getElementById("stat-db-status").style.color = st.db_enabled ? "#34d399" : "#94a3b8";
+          updateProviderBadge(st.provider || "mock");
+          updateDispatchModeBadge(st.dispatch_mode || "auto");
+        }
+
+        // Recent Webhooks
+        const alertsRes = await fetch("/api/alerts?limit=25");
+        if (alertsRes.ok) {
+          const alerts = await alertsRes.json();
+          const tbody = document.getElementById("alerts-table-body");
+          if (!alerts || alerts.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8;">هنوز هشداری دریافت نشده است.</td></tr>`;
+          } else {
+            tbody.innerHTML = alerts.map(a => {
+              const sev = (a.severity || "info").toLowerCase();
+              const sevClass = sev.includes("high") || sev.includes("crit") ? "sev-high" : (sev.includes("med") ? "sev-medium" : "sev-low");
+              const rawEscaped = encodeURIComponent(a.raw_payload || "{}");
+              const nameEsc = encodeURIComponent(a.alert_name || "");
+              const descEsc = encodeURIComponent(a.description || a.message || a.alert_name || "");
+              return `
+                <tr>
+                  <td><code>${a.created_at || a.received_at || '-'}</code></td>
+                  <td><strong>${a.alert_name || '-'}</strong></td>
+                  <td><span class="tag-sev ${sevClass}">${a.severity || '-'}</span></td>
+                  <td>${a.target || '-'}</td>
+                  <td>${a.status || '-'}</td>
+                  <td><small>${a.source_ip || '-'}</small></td>
+                  <td>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                      <button class="btn btn-secondary btn-sm" onclick="viewPayload('${rawEscaped}', '${(a.alert_name || 'Alert').replace(/'/g, "\\'")}')">🔍 JSON</button>
+                      <button class="btn btn-primary btn-sm" onclick="openManualAlertModal('${a.id || ''}', '${nameEsc}', '${descEsc}')">📲 ارسال دستی</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join("");
+          }
+        }
+
+        // Recent SMS logs
+        const smsRes = await fetch("/api/sms-logs?limit=25");
+        if (smsRes.ok) {
+          const smsLogs = await smsRes.json();
+          const tbody = document.getElementById("sms-table-body");
+          if (!smsLogs || smsLogs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8;">هنوز پیامکی ثبت نشده است.</td></tr>`;
+          } else {
+            tbody.innerHTML = smsLogs.map(s => {
+              const st = (s.status || "").toLowerCase();
+              const prov = (s.provider || "").toLowerCase();
+              const isMock = prov.includes("mock");
+
+              let stClass = "status-failed";
+              let stText = "ناموفق";
+              if (isMock) {
+                stClass = "status-dry_run";
+                stText = "🧪 شبیه‌ساز (Mock - ارسال نشده به گوشی)";
+              } else if (st === "sent") {
+                stClass = "status-sent";
+                stText = "✅ ارسال واقعی (Sent)";
+              } else if (st === "dry_run" || st === "saved_manual_mode" || st.includes("manual")) {
+                stClass = "status-dry_run";
+                stText = "🟡 آماده ارسال دستی";
+              }
+
+              return `
+                <tr>
+                  <td><code>${s.created_at || '-'}</code></td>
+                  <td><strong>${s.phone || s.phone_number || '-'}</strong></td>
+                  <td>${s.alert_name || '-'}</td>
+                  <td style="max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.message_text || s.message || ''}">${s.message_text || s.message || '-'}</td>
+                  <td><small>${isMock ? 'Mock (آزمایشی)' : (s.provider || '-')}</small></td>
+                  <td><span class="tag-status ${stClass}">${stText}</span></td>
+                  <td><small title="${s.raw_response || s.error_details || ''}">${s.response_code || s.error_details || '-'}</small></td>
+                </tr>
+              `;
+            }).join("");
+          }
+        }
+
+      } catch (err) {
+        console.warn("Auto-refresh error:", err);
+      } finally {
+        isFetchingRecentData = false;
+      }
+    }
+
+    // Provider Badge & Top Banner updater
+    function updateProviderBadge(provider) {
+      const el = document.getElementById("stat-provider");
+      const isHttp = (provider === "http");
+      if (el) {
+        el.textContent = isHttp ? "درگاه واقعی (HTTP)" : "شبیه‌ساز (Mock)";
+        el.style.color = isHttp ? "#34d399" : "#fbbf24";
+      }
+
+      const banner = document.getElementById("status-banner");
+      const bannerText = document.getElementById("status-banner-text");
+      const bannerAction = document.getElementById("status-banner-action");
+
+      if (banner && bannerText && bannerAction) {
+        banner.style.display = "flex";
+        if (isHttp) {
+          banner.style.background = "rgba(16, 185, 129, 0.12)";
+          banner.style.border = "1px solid #10b981";
+          bannerText.innerHTML = `✅ <strong>درگاه واقعی پیامک (Real SMS Gateway) فعال است:</strong> پیامک‌های سیستم مستقیماً به شماره‌های موبایل ارسال می‌شوند.`;
+          bannerAction.innerHTML = `<button class="btn btn-secondary btn-sm" onclick="toggleProviderMode('mock')">🧪 تغییر به شبیه‌ساز تستی (Mock)</button>`;
+        } else {
+          banner.style.background = "rgba(245, 158, 11, 0.15)";
+          banner.style.border = "1px solid #f59e0b";
+          bannerText.innerHTML = `⚠️ <strong>حالت آزمایشی شبیه‌ساز (Mock Simulator) فعال است:</strong> هیچ پیامک واقعی به گوشی فرستاده نمی‌شود؛ تمام ارسال‌ها فقط در لاگ ثبت می‌شوند.`;
+          bannerAction.innerHTML = `<button class="btn btn-primary btn-sm" onclick="toggleProviderMode('http')">🚀 فعال‌سازی ارسال واقعی پیامک (HTTP)</button>`;
+        }
+      }
+
+      const btn = document.getElementById("btn-toggle-provider");
+      if (btn) {
+        btn.textContent = isHttp ? "🧪 شبیه‌ساز" : "🚀 درگاه واقعی";
+      }
+    }
+
+    // Quick toggle Dispatch Mode
+    async function toggleDispatchMode(targetMode) {
+      const currentMode = currentConfig?.sms?.dispatch_mode || "auto";
+      const nextMode = targetMode || (currentMode === "auto" ? "manual" : "auto");
+
+      const btn = document.getElementById("btn-toggle-dispatch");
+      if (btn) btn.textContent = "⏳...";
+
+      try {
+        const res = await fetch("/api/dispatch-mode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dispatch_mode: nextMode })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (!currentConfig.sms) currentConfig.sms = {};
+          currentConfig.sms.dispatch_mode = nextMode;
+          const selectEl = document.getElementById("cfg-sms-dispatch-mode");
+          if (selectEl) selectEl.value = nextMode;
+          updateDispatchModeBadge(nextMode);
+          showToast(`حالت ارسال به '${nextMode === 'auto' ? 'خودکار' : 'دستی'}' تغییر یافت!`, "success");
+          fetchRecentData();
+        } else {
+          showToast("خطا در تغییر حالت: " + (data.message || "خطای سرور"), "error");
+        }
+      } catch (err) {
+        showToast("خطا در ارتباط با سرور: " + err.message, "error");
+      } finally {
+        if (btn) btn.textContent = "🔄 تغییر حالت";
+      }
+    }
+
+    // Quick toggle Provider Mode
+    async function toggleProviderMode(targetProv) {
+      const currentProv = currentConfig?.sms?.provider || "mock";
+      const nextProv = targetProv || (currentProv === "mock" ? "http" : "mock");
+
+      const btn = document.getElementById("btn-toggle-provider");
+      if (btn) btn.textContent = "⏳...";
+
+      try {
+        const res = await fetch("/api/provider-mode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider: nextProv })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (!currentConfig.sms) currentConfig.sms = {};
+          currentConfig.sms.provider = nextProv;
+          const selectEl = document.getElementById("cfg-sms-provider");
+          if (selectEl) selectEl.value = nextProv;
+          updateProviderBadge(nextProv);
+          showToast(`درگاه پیامک به '${nextProv === 'http' ? 'ارسال واقعی (HTTP)' : 'شبیه‌ساز آزمایشی (Mock)'}' تغییر یافت!`, "success");
+          fetchRecentData();
+        } else {
+          showToast("خطا در تغییر درگاه: " + (data.message || "خطای سرور"), "error");
+        }
+      } catch (err) {
+        showToast("خطا در ارتباط با سرور: " + err.message, "error");
+      } finally {
+        if (btn) btn.textContent = (nextProv === 'http' ? "🧪 شبیه‌ساز" : "🚀 درگاه واقعی");
+      }
+    }
+
+    // Modal Payload Viewer
+    function viewPayload(encodedJson, title) {
+      try {
+        const decoded = decodeURIComponent(encodedJson);
+        const parsed = JSON.parse(decoded);
+        document.getElementById("modal-body").textContent = JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        document.getElementById("modal-body").textContent = decodeURIComponent(encodedJson);
+      }
+      document.getElementById("modal-title").textContent = "متن JSON دریافتی: " + title;
+      document.getElementById("payload-modal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("payload-modal").style.display = "none";
+    }
+
+    // Send Test SMS
+    async function sendTestSms() {
+      const btn = document.getElementById("btn-tab3-test-sms");
+      const phoneInput = document.getElementById("test-sms-phone");
+      const phone = phoneInput.value.trim();
+      const msg = document.getElementById("test-sms-msg").value.trim();
+      const box = document.getElementById("test-sms-result");
+
+      if (!phone) {
+        box.style.display = "block";
+        box.style.background = "rgba(239, 68, 68, 0.15)";
+        box.style.color = "#f87171";
+        box.style.border = "1px solid #ef4444";
+        box.innerHTML = "⚠️ <strong>لطفاً شماره موبایل را وارد نمایید.</strong>";
+        phoneInput.focus();
+        showToast("شماره موبایل را وارد کنید", "error");
+        return;
+      }
+
+      if (btn) { btn.disabled = true; btn.textContent = "⏳ در حال ارسال پیامک..."; }
+      box.style.display = "block";
+      box.style.background = "#1e293b";
+      box.style.color = "#93c5fd";
+      box.style.border = "1px solid #334155";
+      box.textContent = `در حال ارسال پیامک آزمایشی به شماره ${phone}...`;
+
+      try {
+        const res = await fetch("/api/test/sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, message: msg })
+        });
+        const data = await res.json();
+        if (data.success) {
+          box.style.background = "rgba(16, 185, 129, 0.2)";
+          box.style.color = "#34d399";
+          box.style.border = "1px solid #10b981";
+          box.innerHTML = `<strong>✅ پیامک با موفقیت ارسال شد!</strong><br>درگاه استفاده شده: ${data.provider_used || '-'}<br>کد وضعیت: ${data.status_code || 200}<br>شناسه پیامک: ${data.message_id || 'تولید شد'}<br>پاسخ درگاه: ${data.raw_response || '(تایید شد)'}`;
+          showToast("پیامک تستی ارسال شد!", "success");
+        } else {
+          box.style.background = "rgba(239, 68, 68, 0.2)";
+          box.style.color = "#f87171";
+          box.style.border = "1px solid #ef4444";
+          box.innerHTML = `<strong>❌ ارسال پیامک ناموفق بود:</strong><br>خطا: ${data.error_message || data.message}<br>کد وضعیت: ${data.status_code || '-'}<br>پاسخ درگاه: ${data.raw_response || '-'}`;
+          showToast("خطا در ارسال پیامک: " + (data.error_message || data.message), "error");
+        }
+        fetchRecentData();
+      } catch (err) {
+        box.style.background = "rgba(239, 68, 68, 0.2)";
+        box.style.color = "#f87171";
+        box.textContent = "خطای ارتباط با سرور: " + err.message;
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "🚀 ارسال پیامک تستی به گوشی"; }
+      }
+    }
+
+    // Helper HTML escaper
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Dispatch Mode Badge updater
+    function updateDispatchModeBadge(mode) {
+      const el = document.getElementById("stat-dispatch-mode");
+      const sub = document.getElementById("stat-dispatch-sub");
+      if (!el) return;
+      if (mode === "manual") {
+        el.innerHTML = "🟡 دستی (Manual / Dev)";
+        el.style.color = "#f59e0b";
+        if (sub) sub.textContent = "هشدارها در دیتابیس ثبت می‌شوند ولی پیامک فقط با ارسال دستی فرستاده می‌شود";
+      } else {
+        el.innerHTML = "🟢 خودکار (Auto)";
+        el.style.color = "#38bdf8";
+        if (sub) sub.textContent = "ارسال خودکار به تمام شماره‌ها هنگام دریافت هشدار";
+      }
+    }
+
+    // Direct Gateway Diagnostic Test
+    async function sendDirectGatewayTest() {
+      const btn = document.getElementById("btn-cfg-sms-test");
+      const phoneInput = document.getElementById("cfg-sms-test-phone");
+      const phone = phoneInput.value.trim();
+      const msg = document.getElementById("cfg-sms-test-msg").value.trim();
+      const resultBox = document.getElementById("cfg-sms-test-result");
+
+      if (!phone) {
+        resultBox.style.display = "block";
+        resultBox.style.background = "rgba(239, 68, 68, 0.15)";
+        resultBox.style.color = "#f87171";
+        resultBox.style.border = "1px solid #ef4444";
+        resultBox.innerHTML = "⚠️ <strong>لطفاً شماره موبایل گیرنده تست را وارد نمایید.</strong>";
+        phoneInput.focus();
+        showToast("لطفاً شماره موبایل گیرنده تست را وارد کنید", "error");
+        return;
+      }
+
+      if (btn) { btn.disabled = true; btn.textContent = "⏳ در حال ارسال مستقیم به درگاه..."; }
+      resultBox.style.display = "block";
+      resultBox.style.background = "#1e293b";
+      resultBox.style.color = "#93c5fd";
+      resultBox.style.border = "1px solid #334155";
+      resultBox.innerHTML = `⏳ در حال ارسال مستقیم به آدرس درگاه پیامک (${escapeHtml(document.getElementById("cfg-sms-url").value.trim())})...<br><small style="color:#94a3b8;">درخواست در حال پردازش در وب‌سرویس پیامک است...</small>`;
+
+      const payload = {
+        phone: phone,
+        message: msg || "تست مستقیم اتصال به سرور پیامک ردگیت",
+        force_http: true,
+        gateway_config: {
+          url: document.getElementById("cfg-sms-url").value.trim(),
+          auth_type: document.getElementById("cfg-sms-authtype").value,
+          api_key: document.getElementById("cfg-sms-key").value.trim(),
+          auth_header_name: document.getElementById("cfg-sms-hdrname").value.trim(),
+          method: document.getElementById("cfg-sms-method").value,
+          destination_field: document.getElementById("cfg-sms-destfield").value.trim(),
+          message_field: document.getElementById("cfg-sms-msgfield").value.trim(),
+        }
+      };
+
+      try {
+        const res = await fetch("/api/test/sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          resultBox.style.background = "rgba(16, 185, 129, 0.15)";
+          resultBox.style.color = "#34d399";
+          resultBox.style.border = "1px solid #10b981";
+          resultBox.innerHTML = `
+            <div style="font-weight:bold; font-size:0.9rem; margin-bottom:6px;">✅ پاسخ موفق از سرور پیامک (HTTP ${data.status_code || 200}):</div>
+            <div><strong>شماره گیرنده:</strong> ${escapeHtml(data.phone || phone)}</div>
+            <div><strong>شناسه پیامک (Message ID):</strong> ${data.message_id || 'تولید نشد یا در پاسخ وجود ندارد'}</div>
+            <div><strong>کد پاسخ درگاه:</strong> ${data.response_code || '-'}</div>
+            <div style="margin-top:8px;"><strong>متن خام دریافتی از سرور پیامک:</strong></div>
+            <pre style="margin-top:4px; padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; white-space:pre-wrap; word-break:break-all; font-family:Consolas, monospace;">${escapeHtml(data.raw_response || '(خالی)')}</pre>
+          `;
+          showToast("پیامک تستی با موفقیت به سرور پیامک ارسال شد!", "success");
+        } else {
+          resultBox.style.background = "rgba(239, 68, 68, 0.15)";
+          resultBox.style.color = "#f87171";
+          resultBox.style.border = "1px solid #ef4444";
+          resultBox.innerHTML = `
+            <div style="font-weight:bold; font-size:0.9rem; margin-bottom:6px;">❌ خطا در برقراری ارتباط با سرور پیامک (HTTP ${data.status_code || 'خطای شبکه'}):</div>
+            <div><strong>پیام خطا:</strong> ${escapeHtml(data.error_message || data.message || 'نامشخص')}</div>
+            <div style="margin-top:8px;"><strong>پاسخ خام دریافتی از سرور پیامک:</strong></div>
+            <pre style="margin-top:4px; padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; white-space:pre-wrap; word-break:break-all; font-family:Consolas, monospace;">${escapeHtml(data.raw_response || '(پاسخی دریافت نشد)')}</pre>
+          `;
+          showToast("خطا در ارسال به درگاه پیامک: " + (data.error_message || data.message), "error");
+        }
+        fetchRecentData();
+      } catch (err) {
+        resultBox.style.background = "rgba(239, 68, 68, 0.15)";
+        resultBox.style.color = "#f87171";
+        resultBox.style.border = "1px solid #ef4444";
+        resultBox.innerHTML = `<div><strong>خطای ارتباط شبکه:</strong> ${escapeHtml(err.message)}</div>`;
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "🚀 ارسال پیامک تستی به سرور پیامک (Send to SMS Server)"; }
+      }
+    }
+
+    // Modal for sending specific alert manually
+    function openManualAlertModal(alertId, alertNameEsc, alertMsgEsc) {
+      const alertName = decodeURIComponent(alertNameEsc || "");
+      const alertMsg = decodeURIComponent(alertMsgEsc || "");
+
+      document.getElementById("manual-alert-id").value = alertId || "";
+      document.getElementById("manual-alert-name").value = alertName;
+      document.getElementById("manual-alert-msg").value = alertMsg || `هشدار ردگیت: ${alertName}`;
+      document.getElementById("manual-alert-title").textContent = `📲 ارسال دستی هشدار "${alertName || 'ردگیت'}"`;
+
+      const resBox = document.getElementById("manual-alert-result");
+      resBox.style.display = "none";
+      resBox.innerHTML = "";
+
+      const phoneInput = document.getElementById("manual-alert-phone");
+      if (activePhoneNumbers.length > 0 && !phoneInput.value) {
+        phoneInput.value = activePhoneNumbers[0];
+      }
+
+      const pillsContainer = document.getElementById("manual-quick-phones");
+      pillsContainer.innerHTML = "";
+      activePhoneNumbers.forEach(p => {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = p;
+        pill.onclick = () => { phoneInput.value = p; };
+        pillsContainer.appendChild(pill);
+      });
+
+      document.getElementById("manual-alert-modal").style.display = "flex";
+    }
+
+    function closeManualAlertModal(e) {
+      if (e && e.target && e.target !== document.getElementById("manual-alert-modal") && !e.target.hasAttribute("onclick")) {
+        return;
+      }
+      document.getElementById("manual-alert-modal").style.display = "none";
+    }
+
+    async function submitManualAlertSend() {
+      const alertId = document.getElementById("manual-alert-id").value;
+      const alertName = document.getElementById("manual-alert-name").value;
+      const phone = document.getElementById("manual-alert-phone").value.trim();
+      const message = document.getElementById("manual-alert-msg").value.trim();
+
+      if (!phone) {
+        showToast("لطفاً شماره موبایل را وارد کنید", "error");
+        document.getElementById("manual-alert-phone").focus();
+        return;
+      }
+      if (!message) {
+        showToast("متن پیامک نمی‌تواند خالی باشد", "error");
+        return;
+      }
+
+      const btn = document.getElementById("btn-manual-send");
+      const resBox = document.getElementById("manual-alert-result");
+      btn.disabled = true;
+      btn.textContent = "⏳ در حال ارسال...";
+      resBox.style.display = "block";
+      resBox.style.background = "#1e293b";
+      resBox.style.color = "#93c5fd";
+      resBox.style.border = "1px solid #334155";
+      resBox.innerHTML = `در حال ارسال پیامک به درگاه برای شماره ${phone}...`;
+
+      try {
+        const res = await fetch("/api/alerts/send-manual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            alert_id: alertId ? parseInt(alertId, 10) : null,
+            alert_name: alertName,
+            phone: phone,
+            message: message
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          resBox.style.background = "rgba(16, 185, 129, 0.15)";
+          resBox.style.color = "#34d399";
+          resBox.style.border = "1px solid #10b981";
+          resBox.innerHTML = `
+            <strong>✅ با موفقیت ارسال شد!</strong><br>
+            کد وضعیت: ${data.status_code || 200}<br>
+            شناسه پیامک: ${data.message_id || 'ثبت شد'}<br>
+            <pre style="margin-top:6px; padding:6px; background:rgba(0,0,0,0.3); border-radius:4px; font-family:Consolas, monospace;">${escapeHtml(data.raw_response || '(تایید درگاه)')}</pre>
+          `;
+          showToast("پیامک دستی با موفقیت به سرور پیامک ارسال شد!", "success");
+          fetchRecentData();
+        } else {
+          resBox.style.background = "rgba(239, 68, 68, 0.15)";
+          resBox.style.color = "#f87171";
+          resBox.style.border = "1px solid #ef4444";
+          resBox.innerHTML = `
+            <strong>❌ خطا در ارسال به درگاه:</strong><br>
+            ${escapeHtml(data.error_message || data.message || 'نامشخص')}<br>
+            <pre style="margin-top:6px; padding:6px; background:rgba(0,0,0,0.3); border-radius:4px; font-family:Consolas, monospace;">${escapeHtml(data.raw_response || '(بدون پاسخ)')}</pre>
+          `;
+          showToast("خطا در ارسال: " + (data.error_message || data.message), "error");
+        }
+      } catch (err) {
+        resBox.style.background = "rgba(239, 68, 68, 0.15)";
+        resBox.style.color = "#f87171";
+        resBox.innerHTML = "خطای ارتباط با سرور: " + escapeHtml(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "🚀 ارسال مستقیم به درگاه پیامک";
+      }
+    }
+
+    // Webhook simulation sample payloads
+    const samplePayloads = {
+      deadlock: {
+        "alert": {
+          "id": 10542,
+          "name": "Deadlock (SQL Server)",
+          "severity": "High",
+          "target": "SQLPROD01\\ERP",
+          "status": "Raised",
+          "description": "بن‌بست بین دو پردازش در جدول فاکتورهای فروش رخ داد.",
+          "timestamp": new Date().toISOString()
+        }
+      },
+      cpu: {
+        "alert": {
+          "id": 10543,
+          "name": "High CPU utilization",
+          "severity": "Critical",
+          "target": "SQLPROD02\\BI",
+          "status": "Raised",
+          "description": "مصرف پردازنده سرور بیش از ۹۵ درصد شده است.",
+          "timestamp": new Date().toISOString()
+        }
+      },
+      disk: {
+        "alert": {
+          "id": 10544,
+          "name": "Disk space low (Drive D:)",
+          "severity": "Medium",
+          "target": "SQLPROD01",
+          "status": "Raised",
+          "description": "فضای خالی درایو داده‌ها کمتر از ۱۰ درصد است.",
+          "timestamp": new Date().toISOString()
+        }
+      },
+      job: {
+        "alert": {
+          "id": 10545,
+          "name": "SQL Agent Job failure: NightlyBackup",
+          "severity": "High",
+          "target": "SQLPROD01\\MAIN",
+          "status": "Raised",
+          "description": "اجرای فرآیند بکاپ‌گیری شبانه با خطا متوقف شد.",
+          "timestamp": new Date().toISOString()
+        }
+      }
+    };
+
+    function setSamplePayload(type) {
+      document.getElementById("sim-payload").value = JSON.stringify(samplePayloads[type], null, 2);
+    }
+
+    async function fireSimulatedWebhook() {
+      const payloadText = document.getElementById("sim-payload").value.trim();
+      if (!payloadText) { showToast("لطفا یک نمونه هشدار را انتخاب کنید", "error"); return; }
+
+      const box = document.getElementById("sim-result");
+      box.style.display = "block";
+      box.style.background = "#1e293b";
+      box.style.color = "#93c5fd";
+      box.textContent = "در حال شبیه‌سازی ورود هشدار...";
+
+      try {
+        const parsed = JSON.parse(payloadText);
+        const res = await fetch("/webhook/redgate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(parsed)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          box.style.background = "rgba(16, 185, 129, 0.2)";
+          box.style.color = "#34d399";
+          box.style.border = "1px solid #10b981";
+          box.innerHTML = `<strong>✅ هشدار دریافت و در دیتابیس ذخیره شد!</strong><br>${data.message}<br>فایل ذخیره شده: ${data.raw_file || '-'}`;
+          showToast("هشدار ثبت و پیامک آن در صف قرار گرفت!", "success");
+          fetchRecentData();
+        } else {
+          box.style.background = "rgba(239, 68, 68, 0.2)";
+          box.style.color = "#f87171";
+          box.style.border = "1px solid #ef4444";
+          box.innerHTML = `<strong>❌ خطا (${res.status}):</strong><br>${data.message}`;
+        }
+      } catch (err) {
+        box.style.background = "rgba(239, 68, 68, 0.2)";
+        box.style.color = "#f87171";
+        box.textContent = "خطا: " + err.message;
+      }
+    }
+
+    // Live logs viewer
+    async function fetchLiveLogs() {
+      try {
+        const res = await fetch("/api/logs?lines=100");
+        if (res.ok) {
+          const text = await res.text();
+          const box = document.getElementById("console-output");
+          box.textContent = text || "(فایل لاگ در حال حاضر خالی است)";
+          if (document.getElementById("logs-autoscroll").checked) {
+            box.scrollTop = box.scrollHeight;
+          }
+        }
+      } catch (err) {
+        console.warn("Log fetch error:", err);
+      }
+    }
+
+    // Auto-refresh interval
+    function setupAutoRefresh() {
+      setInterval(() => {
+        if (document.getElementById("auto-refresh-toggle").checked && document.getElementById("tab-monitor").classList.contains("active")) {
+          fetchRecentData();
+        }
+        if (document.getElementById("tab-logs").classList.contains("active")) {
+          fetchLiveLogs();
+        }
+      }, 3000);
+    }
+
+    // Initialization on page load
+    window.addEventListener("DOMContentLoaded", () => {
+      setSamplePayload("deadlock");
+      loadConfig();
+      fetchRecentData();
+      setupAutoRefresh();
+    });
+  </script>
+</body>
+</html>
